@@ -1,0 +1,6 @@
+[submodule "themes/wangchucheng.com/hugo-eureka"]
+	path = themes/wangchucheng.com/hugo-eureka
+	url = https://github.com/wangchucheng/hugo-eureka.git
+[submodule "themes/eureka"]
+	path = themes/eureka
+	url = https://github.com/wangchucheng/hugo-eureka.git

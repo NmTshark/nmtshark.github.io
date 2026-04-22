@@ -1,4 +1,4 @@
-baseURL: /
+baseURL: "https://nmtshark.github.io/"
 title: NmToan Blog
 
 # Uncomment when not installing with Hugo Modules

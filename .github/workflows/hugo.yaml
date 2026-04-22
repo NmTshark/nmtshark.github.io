@@ -46,7 +46,9 @@ jobs:
 
       - name: Install dependencies and Build
         run: |
+          hugo mod npm pack
           npm install
+          npm install -D postcss postcss-cli autoprefixer tailwindcss@2.2.19
           hugo --minify
 
       - name: Upload artifact

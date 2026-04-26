@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>EDR on NmToan Blog</title><link>https://nmtshark.github.io/tags/edr/</link><description>Recent content in EDR on NmToan Blog</description><generator>Hugo</generator><language>en</language><copyright>&amp;copy; 2021 &lt;a href="https://www.wangchucheng.com/"&gt;WANG Chucheng&lt;/a&gt; and &lt;a href="https://www.ruiqima.com/"&gt;MA Ruiqi&lt;/a&gt;</copyright><lastBuildDate>Fri, 03 Nov 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://nmtshark.github.io/tags/edr/index.xml" rel="self" type="application/rss+xml"/><item><title>Phase 3: Giám sát Posture (FleetDM &amp; Osquery)</title><link>https://nmtshark.github.io/docs/zerotrust/phase3/</link><pubDate>Fri, 03 Nov 2023 00:00:00 +0000</pubDate><guid>https://nmtshark.github.io/docs/zerotrust/phase3/</guid><description>&lt;p&gt;Thành phần thứ ba của hệ thống có nhiệm vụ trả lời câu hỏi: &amp;ldquo;Thiết bị có an toàn không?&amp;rdquo;. Chúng ta sử dụng FleetDM làm máy chủ quản lý tập trung và Osquery làm tác nhân giám sát.&lt;/p&gt;
+&lt;h2 id="1-khởi-chạy-fleetdm-server"&gt;1. Khởi chạy FleetDM Server&lt;/h2&gt;
+&lt;p&gt;FleetDM được đóng gói qua Docker Compose, yêu cầu 3 container hoạt động song song:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;FleetDM App:&lt;/strong&gt; Giao diện quản trị và xử lý API.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;MySQL:&lt;/strong&gt; Lưu trữ thông tin thiết bị và cấu hình truy vấn.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Redis:&lt;/strong&gt; Cache dữ liệu tăng tốc phản hồi.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Khởi chạy bằng lệnh:&lt;/p&gt;</description></item></channel></rss>

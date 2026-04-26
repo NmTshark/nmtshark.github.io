@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Testing on NmToan Blog</title><link>https://nmtshark.github.io/tags/testing/</link><description>Recent content in Testing on NmToan Blog</description><generator>Hugo</generator><language>en</language><copyright>&amp;copy; 2021 &lt;a href="https://www.wangchucheng.com/"&gt;WANG Chucheng&lt;/a&gt; and &lt;a href="https://www.ruiqima.com/"&gt;MA Ruiqi&lt;/a&gt;</copyright><lastBuildDate>Wed, 08 Nov 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://nmtshark.github.io/tags/testing/index.xml" rel="self" type="application/rss+xml"/><item><title>Phase 8: Kịch bản Thực nghiệm (Demo)</title><link>https://nmtshark.github.io/docs/zerotrust/phase8/</link><pubDate>Wed, 08 Nov 2023 00:00:00 +0000</pubDate><guid>https://nmtshark.github.io/docs/zerotrust/phase8/</guid><description>&lt;p&gt;Mọi thiết lập về định danh, mạng lưới, giám sát và tự động hóa đã hoàn tất! Để chứng minh hệ thống C-ZTNA hoạt động hoàn hảo trong môi trường thực tế, bạn cần chạy tuần tự 4 kịch bản kiểm thử (Test Cases) sau đây.&lt;/p&gt;
+&lt;h2 id="kịch-bản-a-truy-cập-hợp-lệ-happy-path"&gt;Kịch bản A: Truy cập hợp lệ (Happy Path)&lt;/h2&gt;
+&lt;p&gt;Kịch bản này chứng minh luồng đăng nhập Zero Trust cơ bản thông qua cơ chế SSO của Keycloak.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Thao tác:&lt;/strong&gt; 1. Người dùng mở ứng dụng Ziti Desktop Edge (ZDE) trên máy trạm.
+2. Click vào nút &lt;strong&gt;Authorize&lt;/strong&gt;. Trình duyệt sẽ tự động bật lên và chuyển hướng đến trang đăng nhập của Keycloak.
+3. Đăng nhập bằng tài khoản hợp lệ, ví dụ: &lt;code&gt;alice.sales@lab.local&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Kết quả kỳ vọng:&lt;/strong&gt; * Identity trên giao diện ZDE chuyển sang trạng thái &lt;code&gt;Active&lt;/code&gt;.
+&lt;ul&gt;
+&lt;li&gt;Người dùng mở trình duyệt và truy cập thành công vào tên miền ảo &lt;code&gt;http://sales-web.demo&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="kịch-bản-b-tấn-công-mã-độc-vi-phạm-posture"&gt;Kịch bản B: Tấn công mã độc (Vi phạm Posture)&lt;/h2&gt;
+&lt;p&gt;Kịch bản này chứng minh khả năng &amp;ldquo;Xác minh liên tục&amp;rdquo; (Continuous Verification) và tốc độ ngắt mạng tự động (Automated SOAR) của hệ thống.&lt;/p&gt;</description></item></channel></rss>

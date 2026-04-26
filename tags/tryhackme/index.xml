@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>TryHackMe on NmToan Blog</title><link>https://nmtshark.github.io/tags/tryhackme/</link><description>Recent content in TryHackMe on NmToan Blog</description><generator>Hugo</generator><language>en</language><copyright>&amp;copy; 2021 &lt;a href="https://www.wangchucheng.com/"&gt;WANG Chucheng&lt;/a&gt; and &lt;a href="https://www.ruiqima.com/"&gt;MA Ruiqi&lt;/a&gt;</copyright><lastBuildDate>Mon, 29 Dec 2025 13:39:20 +0000</lastBuildDate><atom:link href="https://nmtshark.github.io/tags/tryhackme/index.xml" rel="self" type="application/rss+xml"/><item><title>SeeTwo Tryhackme</title><link>https://nmtshark.github.io/posts/seetwo-tryhackme/</link><pubDate>Mon, 29 Dec 2025 04:59:04 +0000</pubDate><guid>https://nmtshark.github.io/posts/seetwo-tryhackme/</guid><description>&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Chủ đề:&lt;/strong&gt; Phân tích lưu lượng mạng và Dịch ngược Mã độc Python (C2 Traffic Decryption)
+&lt;strong&gt;Mục tiêu:&lt;/strong&gt; Phân tích file capture.pcap, xác định hoạt động đáng ngờ, dịch ngược mã độc và giải mã nội dung giao tiếp giữa nạn nhân (victim) và máy chủ điều khiển (C2 Server)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;hr&gt;
+&lt;h2 id="mô-tả-thử-thách"&gt;Mô tả thử thách&lt;/h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;You are tasked with looking at some suspicious network activity by your digital forensics team.
+The server has been taken out of production while you analyze the suspicious behavior.&lt;/p&gt;</description></item></channel></rss>

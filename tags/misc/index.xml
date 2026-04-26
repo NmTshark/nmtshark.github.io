@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Misc on NmToan Blog</title><link>https://nmtshark.github.io/tags/misc/</link><description>Recent content in Misc on NmToan Blog</description><generator>Hugo</generator><language>en</language><copyright>&amp;copy; 2021 &lt;a href="https://www.wangchucheng.com/"&gt;WANG Chucheng&lt;/a&gt; and &lt;a href="https://www.ruiqima.com/"&gt;MA Ruiqi&lt;/a&gt;</copyright><lastBuildDate>Sat, 18 Apr 2026 13:39:20 +0000</lastBuildDate><atom:link href="https://nmtshark.github.io/tags/misc/index.xml" rel="self" type="application/rss+xml"/><item><title>Soulmate Squ1rrel Writeup</title><link>https://nmtshark.github.io/posts/soulmate_writeup/</link><pubDate>Sat, 18 Apr 2026 04:59:04 +0000</pubDate><guid>https://nmtshark.github.io/posts/soulmate_writeup/</guid><description>&lt;h2 id="challenge-overview"&gt;Challenge overview&lt;/h2&gt;
+&lt;p&gt;Describe:
+the great church of scientology is, as always, in search of wife candidates for the Scientology Freedom Medal of Valor-winning actor tom cruise.&lt;/p&gt;
+&lt;p&gt;this used to be a manual process, but apparently these days you can automate anything with ai?&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://soulmate.squ1rrel.dev"&gt;https://soulmate.squ1rrel.dev&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;At first glance, this challenge looks like a simple web app: enter a birthday and get a generated “soulmate”.
+However, after reading the source code, the real goal becomes clear:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;the backend generates a face&lt;/li&gt;
+&lt;li&gt;a celebrity classifier scores that face&lt;/li&gt;
+&lt;li&gt;if the &lt;strong&gt;Tom Cruise&lt;/strong&gt; score is at least &lt;code&gt;0.15&lt;/code&gt;, the backend returns the flag&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id="initial-inspection"&gt;Initial inspection&lt;/h2&gt;
+&lt;p&gt;The most relevant files were:&lt;/p&gt;</description></item></channel></rss>

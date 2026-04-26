@@ -1,0 +1,110 @@
+<!doctype html><html lang=en dir=ltr><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Phase 6: Posture Orchestrator | Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust | NmToan Blog</title><meta name=generator content="Hugo Eureka 0.9.3"><link rel=stylesheet href=https://nmtshark.github.io/css/eureka.min.d69f9ba11e39460e0c72f6952b8694b04ebcbd76fd33468ac1338291c2c709c503834d39ba9eb6427170f24918d3a11e.css><script defer src=https://nmtshark.github.io/js/eureka.min.fa9a6bf6d7a50bb635b4cca7d2ba5cf3dfb095ae3798773f1328f7950028b48c17d06276594e1b5f244a25a6c969a705.js></script><link rel=preconnect href=https://fonts.googleapis.com><link rel=preconnect href=https://fonts.gstatic.com crossorigin><link rel=preload href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&amp;family=Noto+Serif+SC:wght@400;600;700&amp;display=swap" as=style onload='this.onload=null,this.rel="stylesheet"'><link rel=stylesheet href=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/styles/base16/solarized-light.min.css media=print onload='this.media="all",this.onload=null' crossorigin><script defer src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/highlight.min.js crossorigin></script><script defer src=https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.4.0/build/languages/dart.min.js crossorigin></script><link rel=stylesheet href=https://nmtshark.github.io/css/highlightjs.min.a02d1b7bfa7653e4d7684d8787a2acd5fe733bb02bc51100ed283b052fb81ac1bd98abbcd0af6ad005b66b8f284a3ab2.css media=print onload='this.media="all",this.onload=null'><script defer type=text/javascript src=https://nmtshark.github.io/js/fontawesome.min.e2f6d6879180aca6d7a208caf6042b48205fe0e2b24323ecb4246f857cef11589c39e283fb5a5e45945791ce4c3b7595.js></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css integrity=sha384-MlJdn/WNKDGXveldHDdyRP1R4CTHr3FeuDNfhsLPYrq2t0UBkUdK2jyTnXPEK1NQ media=print onload='this.media="all",this.onload=null' crossorigin><script defer src=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js integrity=sha384-VQ8d8WVFw0yHhCk5E8I86oOhv48xLpnDZx5T9GogA/Y84DcCKWXDmSDfn13bzFZY crossorigin></script><script defer src=https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/contrib/auto-render.min.js integrity=sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR crossorigin></script><script>document.addEventListener("DOMContentLoaded",function(){renderMathInElement(document.body,{delimiters:[{left:"$$",right:"$$",display:!0},{left:"$",right:"$",display:!1},{left:"\\(",right:"\\)",display:!1},{left:"\\[",right:"\\]",display:!0}]})})</script><script defer src=https://cdn.jsdelivr.net/npm/mermaid@8.14.0/dist/mermaid.min.js integrity=sha384-atOyb0FxAgN9LyAc6PEf9BjgwLISyansgdH8/VXQH8p2o5vfrRgmGIJ2Sg22L0A0 crossorigin></script><link rel=icon type=image/png sizes=32x32 href=https://nmtshark.github.io/images/icon_hu_cea985e214c74f98.png><link rel=apple-touch-icon sizes=180x180 href=https://nmtshark.github.io/images/icon_hu_b4231e3a3e195a.png><meta name=description content="Lập trình kịch bản Python đóng vai trò tự động hóa luồng SOAR cho hệ thống C-ZTNA."><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Docs","item":"https://nmtshark.github.io/docs/"},{"@type":"ListItem","position":2,"name":"Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust","item":"https://nmtshark.github.io/docs/zerotrust/"},{"@type":"ListItem","position":3,"name":"Phase 6: Posture Orchestrator","item":"https://nmtshark.github.io/docs/zerotrust/phase6/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"Article","mainEntityOfPage":{"@type":"WebPage","@id":"https://nmtshark.github.io/docs/zerotrust/phase6/"},"headline":"Phase 6: Posture Orchestrator | Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust | NmToan Blog","datePublished":"2023-11-06T00:00:00+00:00","dateModified":"2023-11-06T00:00:00+00:00","wordCount":967,"publisher":{"@type":"Person","name":"WANG Chucheng","logo":{"@type":"ImageObject","url":"https://nmtshark.github.io/images/icon.png"}},"description":"Lập trình kịch bản Python đóng vai trò tự động hóa luồng SOAR cho hệ thống C-ZTNA."}</script><meta property="og:title" content="Phase 6: Posture Orchestrator | Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust | NmToan Blog"><meta property="og:type" content="article"><meta property="og:image" content="https://nmtshark.github.io/images/icon.png"><meta property="og:url" content="https://nmtshark.github.io/docs/zerotrust/phase6/"><meta property="og:description" content="Lập trình kịch bản Python đóng vai trò tự động hóa luồng SOAR cho hệ thống C-ZTNA."><meta property="og:locale" content="en"><meta property="og:site_name" content="NmToan Blog"><meta property="article:published_time" content="2023-11-06T00:00:00+00:00"><meta property="article:modified_time" content="2023-11-06T00:00:00+00:00"><meta property="article:section" content="docs"><meta property="article:tag" content="Python"><meta property="article:tag" content="Automation"><meta property="article:tag" content="SOAR"><meta property="article:tag" content="API"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase1/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase2/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase3/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase4/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase5/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase7/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase8/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/phase9/"><meta property="og:see_also" content="https://nmtshark.github.io/docs/zerotrust/"><body class="flex min-h-screen flex-col"><header class="min-h-16 pl-scrollbar bg-secondary-bg fixed z-50 flex w-full items-center shadow-sm"><div class="mx-auto w-full max-w-screen-xl"><script>let storageColorScheme=localStorage.getItem("lightDarkMode");((storageColorScheme=="Auto"||storageColorScheme==null)&&window.matchMedia("(prefers-color-scheme: dark)").matches||storageColorScheme=="Dark")&&document.getElementsByTagName("html")[0].classList.add("dark")</script><nav class="flex items-center justify-between flex-wrap px-4 py-4 md:py-0"><a href=/ class="me-6 text-primary-text text-xl font-bold">NmToan Blog</a>
+<button id=navbar-btn class="md:hidden flex items-center px-3 py-2" aria-label="Open Navbar">
+<i class="fas fa-bars"></i></button><div id=target class="hidden block md:flex md:grow md:justify-between md:items-center w-full md:w-auto text-primary-text z-20"><div class="md:flex md:h-16 text-sm md:grow pb-4 md:pb-0 border-b md:border-b-0"><a href=/#about class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 border-transparent me-4">About</a>
+<a href=/posts/ class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 border-transparent me-4">Posts</a>
+<a href=/docs/ class="block mt-4 md:inline-block md:mt-0 md:h-(16-4px) md:leading-(16-4px) box-border md:border-t-2 md:border-b-2 selected-menu-item me-4">Docs</a></div><div class=flex><div class="relative pt-4 md:pt-0"><div class="cursor-pointer hover:text-eureka" id=lightDarkMode><i class="fas fa-adjust"></i></div><div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-30" id=is-open></div><div class="absolute flex flex-col start-0 md:start-auto end-auto md:end-0 hidden bg-secondary-bg w-48 rounded py-2 border border-tertiary-bg cursor-pointer z-40" id=lightDarkOptions><span class="px-4 py-1 hover:text-eureka" name=Light>Light</span>
+<span class="px-4 py-1 hover:text-eureka" name=Dark>Dark</span>
+<span class="px-4 py-1 hover:text-eureka" name=Auto>Auto</span></div></div></div></div><div class="fixed hidden inset-0 opacity-0 h-full w-full cursor-default z-0" id=is-open-mobile></div></nav><script>let element=document.getElementById("lightDarkMode");storageColorScheme==null||storageColorScheme=="Auto"?document.addEventListener("DOMContentLoaded",()=>{window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",switchDarkMode)}):storageColorScheme=="Light"?(element.firstElementChild.classList.remove("fa-adjust"),element.firstElementChild.setAttribute("data-icon","sun"),element.firstElementChild.classList.add("fa-sun")):storageColorScheme=="Dark"&&(element.firstElementChild.classList.remove("fa-adjust"),element.firstElementChild.setAttribute("data-icon","moon"),element.firstElementChild.classList.add("fa-moon")),document.addEventListener("DOMContentLoaded",()=>{getcolorscheme(),switchBurger()})</script></div></header><main class="grow pt-16"><div class=pl-scrollbar><div class="mx-auto w-full max-w-screen-xl lg:px-4 xl:px-8"><div class=lg:pt-12><div class="flex flex-col md:flex-row bg-secondary-bg rounded"><div class="md:w-1/4 lg:w-1/5 border-e"><div class="sticky top-16 pt-6"><div id=sidebar-title class="md:hidden mx-4 px-2 pt-4 pb-2 md:border-b text-tertiary-text md:text-primary-text"><span class=font-semibold>Table of Contents</span>
+<i class='fas fa-caret-right ms-1'></i></div><div id=sidebar-toc class="hidden md:block overflow-y-auto mx-6 md:mx-0 pe-6 pt-2 md:max-h-doc-sidebar bg-primary-bg md:bg-transparent"><div class="flex flex-wrap ms-4 -me-2 p-2 bg-secondary-bg md:bg-primary-bg rounded"><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/>Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust</a></div><ul class=ps-6><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase1/>Phase 1: Triển khai Identity Provider (Keycloak)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase2/>Phase 2: Thiết lập mạng lõi (OpenZiti)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase3/>Phase 3: Giám sát Posture (FleetDM & Osquery)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase4/>Phase 4: Bộ não ra quyết định (OPA)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase5/>Phase 5: Tích hợp Xác thực (Keycloak + Ziti)</a></div></li><li class=py-2><div><a class="text-eureka hover:text-eureka" href=https://nmtshark.github.io/docs/zerotrust/phase6/>Phase 6: Posture Orchestrator</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase7/>Phase 7: Dịch vụ và Chính sách Mạng (Zero Trust Rules)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase8/>Phase 8: Kịch bản Thực nghiệm (Demo)</a></div></li><li class=py-2><div><a class=hover:text-eureka href=https://nmtshark.github.io/docs/zerotrust/phase9/>Phase 9: Xử lý sự cố & Checklist (Troubleshooting)</a></div></li></ul></div></div></div><div class="w-full md:w-3/4 lg:w-4/5 pb-8 pt-2 md:pt-8"><div class=flex><div class="w-full lg:w-3/4 px-6"><article class=prose><h1 class=mb-4>Phase 6: Posture Orchestrator</h1><div class="text-tertiary-text not-prose mt-2 flex flex-row flex-wrap items-center"><div class="me-6 my-2"><i class="fas fa-calendar me-1"></i>
+<span>2023-11-06</span></div><div class="me-6 my-2"><i class="fas fa-clock me-1"></i>
+<span>5 min read</span></div><div class="me-6 my-2"><i class="fas fa-folder me-1"></i>
+<a href=https://nmtshark.github.io/categories/tutorials/ class=hover:text-eureka>Tutorials</a>
+<span>, </span><a href=https://nmtshark.github.io/categories/cybersecurity/ class=hover:text-eureka>Cybersecurity</a></div><div class="me-6 my-2"><i class="fas fa-th-list me-1"></i>
+<a href=https://nmtshark.github.io/series/tri%E1%BB%83n-khai-c-ztna/ class=hover:text-eureka>Triển Khai C-ZTNA</a></div></div><p>Nếu OPA là bộ não ra quyết định, OpenZiti là tay chân thực thi, thì <strong>Posture Orchestrator</strong> chính là hệ thần kinh. Đây là một đoạn mã (middleware) tự viết bằng Python, đóng vai trò kết nối luồng dữ liệu độc lập giữa FleetDM, OPA và OpenZiti thành một vòng lặp tự động hóa (SOAR).</p><h2 id=1-logic-hoạt-động-của-orchestrator>1. Logic hoạt động của Orchestrator</h2><p>Đoạn mã Python sẽ chạy ngầm dưới dạng Daemon, thực hiện chu trình 7 bước sau mỗi khoảng thời gian cố định (ví dụ: 5 giây/lần):</p><ol><li><strong>Lấy dữ liệu (Polling):</strong> Gọi API của FleetDM để lấy danh sách toàn bộ các Host đang online.</li><li><strong>Trích xuất:</strong> Đọc dữ liệu Host Posture và tính toán danh sách các luật vi phạm (<code>failing_policies[]</code>) của từng máy.</li><li><strong>Tham vấn:</strong> Đóng gói mảng vi phạm đó, gửi API sang cho OPA (Port 8181) và nhận về kết quả phán quyết (<code>compliant</code> hoặc <code>quarantine</code>).</li><li><strong>Ánh xạ danh tính:</strong> Lấy Hostname của thiết bị từ FleetDM, ghép với tiền tố <code>ep-</code> để tìm kiếm Định danh (Identity) tương ứng trên OpenZiti Controller (như cấu trúc đặt tên ở Phase 2).</li><li><strong>Cập nhật Nhãn (Tagging):</strong> Gọi Ziti API để cập nhật trường <code>roleAttributes</code>. <strong>Lưu ý quan trọng:</strong> Nó phải được lập trình để giữ nguyên các thẻ phòng ban cũ (như <code>#role.sales</code>), và chỉ ghi đè thay đổi đối với nhãn posture thành <code>#posture.compliant</code> hoặc <code>#posture.quarantine</code>.</li><li><strong>Thực thi ngắt mạng (Enforcement):</strong> Nếu quyết định là <code>quarantine</code>, Orchestrator không chỉ đổi thẻ mà còn phải gọi API thu hồi lập tức (Revoke Session) các phiên dịch vụ đang active của thiết bị đó. Việc này đảm bảo ngắt mạng tức khắc thay vì chờ hệ thống tự Timeout.</li><li><strong>Lưu vết:</strong> Ghi lại toàn bộ lịch sử biến đổi trạng thái vào cơ sở dữ liệu <code>orchestrator.db</code> (SQLite) và xuất ra file CSV để phục vụ báo cáo.</li></ol><h2 id=2-file-cấu-hình-configyaml>2. File cấu hình (<code>config.yaml</code>)</h2><p>Để script Orchestrator linh hoạt mà không cần sửa code, bạn cần định nghĩa một file <code>config.yaml</code> chứa thông tin kết nối đến tất cả các thành phần:</p><pre><code class=language-yaml>poll_interval_seconds: 5
+
+fleet:
+  url: &quot;[https://fleet.lab.local:8443](https://fleet.lab.local:8443)&quot;
+  api_token: &quot;MÃ_TOKEN_LẤY_TỪ_FLEETDM_ADMIN&quot;
+
+opa:
+  url: &quot;http://opa:8181&quot;
+  decision_path: &quot;/v1/data/posture/decision&quot;
+
+mapping:
+  mode: &quot;hostname&quot;
+  ziti_identity_prefix: &quot;ep-&quot;
+
+posture_attributes:
+  compliant: &quot;posture.compliant&quot;
+  quarantine: &quot;posture.quarantine&quot;
+
+enforcement:
+  # Cờ này cực kỳ quan trọng để đảm bảo TTE (Time-to-Enforce) ở mức mili-giây
+  revoke_sessions_on_quarantine: true
+
+Gemini đã nói
+Dưới đây là nội dung hoàn chỉnh cho Phase 6. Ở giai đoạn này, chúng ta sẽ thiết lập &quot;trái tim&quot; tự động hóa của toàn bộ hệ thống. Tôi đã gắn tham số weight: 6 vào Frontmatter để đảm bảo đúng thứ tự trên blog của bạn.
+
+Bạn hãy nhấn nút Copy ở góc trên bên phải khung dưới đây và dán vào file phase6.md:
+
+Markdown
+---
+title: &quot;Phase 6: Posture Orchestrator&quot;
+description: &quot;Lập trình kịch bản Python đóng vai trò tự động hóa luồng SOAR cho hệ thống C-ZTNA.&quot;
+toc: true
+authors: []
+tags: [&quot;Python&quot;, &quot;Automation&quot;, &quot;SOAR&quot;, &quot;API&quot;]
+categories: [&quot;Tutorials&quot;, &quot;Cybersecurity&quot;]
+series: [&quot;Triển khai C-ZTNA&quot;]
+date: '2023-11-06'
+lastmod: '2023-11-06'
+draft: false
+weight: 6
+---
+
+Nếu OPA là bộ não ra quyết định, OpenZiti là tay chân thực thi, thì **Posture Orchestrator** chính là hệ thần kinh. Đây là một đoạn mã (middleware) tự viết bằng Python, đóng vai trò kết nối luồng dữ liệu độc lập giữa FleetDM, OPA và OpenZiti thành một vòng lặp tự động hóa (SOAR).
+
+## 1. Logic hoạt động của Orchestrator
+
+Đoạn mã Python sẽ chạy ngầm dưới dạng Daemon, thực hiện chu trình 7 bước sau mỗi khoảng thời gian cố định (ví dụ: 5 giây/lần):
+
+1. **Lấy dữ liệu (Polling):** Gọi API của FleetDM để lấy danh sách toàn bộ các Host đang online.
+2. **Trích xuất:** Đọc dữ liệu Host Posture và tính toán danh sách các luật vi phạm (`failing_policies[]`) của từng máy.
+3. **Tham vấn:** Đóng gói mảng vi phạm đó, gửi API sang cho OPA (Port 8181) và nhận về kết quả phán quyết (`compliant` hoặc `quarantine`).
+4. **Ánh xạ danh tính:** Lấy Hostname của thiết bị từ FleetDM, ghép với tiền tố `ep-` để tìm kiếm Định danh (Identity) tương ứng trên OpenZiti Controller (như cấu trúc đặt tên ở Phase 2).
+5. **Cập nhật Nhãn (Tagging):** Gọi Ziti API để cập nhật trường `roleAttributes`. **Lưu ý quan trọng:** Nó phải được lập trình để giữ nguyên các thẻ phòng ban cũ (như `#role.sales`), và chỉ ghi đè thay đổi đối với nhãn posture thành `#posture.compliant` hoặc `#posture.quarantine`.
+6. **Thực thi ngắt mạng (Enforcement):** Nếu quyết định là `quarantine`, Orchestrator không chỉ đổi thẻ mà còn phải gọi API thu hồi lập tức (Revoke Session) các phiên dịch vụ đang active của thiết bị đó. Việc này đảm bảo ngắt mạng tức khắc thay vì chờ hệ thống tự Timeout.
+7. **Lưu vết:** Ghi lại toàn bộ lịch sử biến đổi trạng thái vào cơ sở dữ liệu `orchestrator.db` (SQLite) và xuất ra file CSV để phục vụ báo cáo.
+
+## 2. File cấu hình (`config.yaml`)
+
+Để script Orchestrator linh hoạt mà không cần sửa code, bạn cần định nghĩa một file `config.yaml` chứa thông tin kết nối đến tất cả các thành phần:
+
+```yaml
+poll_interval_seconds: 5
+
+fleet:
+  url: &quot;[https://fleet.lab.local:8443](https://fleet.lab.local:8443)&quot;
+  api_token: &quot;MÃ_TOKEN_LẤY_TỪ_FLEETDM_ADMIN&quot;
+
+opa:
+  url: &quot;http://opa:8181&quot;
+  decision_path: &quot;/v1/data/posture/decision&quot;
+
+mapping:
+  mode: &quot;hostname&quot;
+  ziti_identity_prefix: &quot;ep-&quot;
+
+posture_attributes:
+  compliant: &quot;posture.compliant&quot;
+  quarantine: &quot;posture.quarantine&quot;
+
+enforcement:
+  # Cờ này cực kỳ quan trọng để đảm bảo TTE (Time-to-Enforce) ở mức mili-giây
+  revoke_sessions_on_quarantine: true 
+3. Khởi chạy hệ thần kinh trung ương
+Mở Terminal tại thư mục chứa source code của Orchestrator, cài đặt các thư viện cần thiết (requests, sqlite3...) và chạy lệnh:
+
+Bash
+python3 orchestrator.py
+Hãy để Terminal này chạy ngầm (hoặc dùng tmux/screen). Khi bạn thấy Terminal in ra các dòng log quét (Polling) liên tục màu xanh, xin chúc mừng, vòng lặp tự động hóa của bạn đã chính thức hòa mạng!
+</code></pre></article><div class=my-4><a href=https://nmtshark.github.io/tags/python/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#Python</a>
+<a href=https://nmtshark.github.io/tags/automation/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#Automation</a>
+<a href=https://nmtshark.github.io/tags/soar/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#SOAR</a>
+<a href=https://nmtshark.github.io/tags/api/ class="inline-block bg-tertiary-bg text-sm rounded px-3 py-1 my-1 me-2 hover:text-eureka">#API</a></div><div class="-mx-2 mt-4 flex flex-col border-t px-2 pt-4 md:flex-row md:justify-between"><div><span class="text-primary-text block font-bold">Previous</span>
+<a href=https://nmtshark.github.io/docs/zerotrust/phase5/ class=block>Phase 5: Tích hợp Xác thực (Keycloak + Ziti)</a></div><div class="mt-4 md:mt-0 md:text-right"><span class="text-primary-text block font-bold">Next</span>
+<a href=https://nmtshark.github.io/docs/zerotrust/phase7/ class=block>Phase 7: Dịch vụ và Chính sách Mạng (Zero Trust Rules)</a></div></div></div><div class="hidden lg:block lg:w-1/4"><div class="bg-secondary-bg
+prose sticky top-16 z-10 hidden px-6 py-4 lg:block"><h3>On This Page</h3></div><div class="sticky-toc
+border-s
+hidden px-6 pb-6 lg:block"><nav id=TableOfContents><ul><li><a href=#1-logic-hoạt-động-của-orchestrator>1. Logic hoạt động của Orchestrator</a></li><li><a href=#2-file-cấu-hình-configyaml>2. File cấu hình (<code>config.yaml</code>)</a></li></ul></nav></div><script>window.addEventListener("DOMContentLoaded",()=>{enableStickyToc()})</script></div></div></div></div></div><script>document.addEventListener("DOMContentLoaded",()=>{hljs.highlightAll(),changeSidebarHeight(),switchDocToc()})</script></div></div></main><footer class=pl-scrollbar><div class="mx-auto w-full max-w-screen-xl"><div class="text-center p-6 pin-b"><p class="text-sm text-tertiary-text">&copy; 2021 <a href=https://www.wangchucheng.com/>WANG Chucheng</a> and <a href=https://www.ruiqima.com/>MA Ruiqi</a>
+&#183; Powered by the <a href=https://github.com/wangchucheng/hugo-eureka class=hover:text-eureka>Eureka</a> theme for <a href=https://gohugo.io class=hover:text-eureka>Hugo</a></p></div></div></footer></body></html>

@@ -59,7 +59,7 @@ iVBORw0KGgoAAAANSUhEUgAAAVwAAAFcBAMAAAB2OBsfAAAAKlBMVEXu7u7///8BAAD1Qzaenp7+TD40
 
 Tiếp theo tôi lọc filter giao thức HTTP để phân tích các gói tin HTTP và nhận được kết quả như sau:
 
-![Các gói tin HTTP](src/assets/images/http.png)
+![Các gói tin HTTP](/images/seetwoTHM/http.png)
 
 Qua việc phân tích các gói tin HTTP và trước đó, tôi phát hiện có 1 file được truyền tải và tôi đã tải file này về để phân tích tiếp bằng cách sử dụng 
 ``` 
@@ -67,10 +67,10 @@ file --> export objects --> save all
 ```
 Sau khi tải về tôi được một file có tên là `base64_client`. Tôi sử dụng lệnh `file base64_client` để kiểm tra loại file và nhận được kết quả:
 
-![Loại file](src/assets/images/file.png)
+![Loại file](/images/seetwoTHM/file.png)
 
 Sau đó tiến hành tôi sử dụng lệnh cat và nhận thấy đây là một file chứa một chuỗi văn bản khổng lồ có thể là đoạn mã hóa bằng base64:
-![Nội dung file base64_client](src/assets/images/cat.png)
+![Nội dung file base64_client](/images/seetwoTHM/cat.png)
 
 Tôi tiến hành giải mã đoạn base64 này bằng lệnh:
 ```
@@ -78,11 +78,11 @@ base64 -d base64_client > decoded_file
 ```
 Sau khi giải mã tôi nhận được một file có tên `decoded_file`. Tôi tiếp tục sử dụng lệnh `file decoded_file` để kiểm tra loại file và nhận được kết quả:
 
-![Loại file decoded_file](src/assets/images/file_decoded.png)
+![Loại file decoded_file](/images/seetwoTHM/file_decoded.png)
 
 Từ kết quả trên tôi nhận thấy đây là một file thực thi ELF 64-bit. Tôi sử dụng lệnh `strings decoded_file | less` để xem các chuỗi ký tự trong file và nhận được nhiều chuỗi đáng chú ý như:
 
-![Chuỗi trong decoded_file](src/assets/images/strings.png)
+![Chuỗi trong decoded_file](/images/seetwoTHM/strings.png)
 Phân tích từ các chuỗi trên tôi nhận thấy đây là một mã độc được viết bằng Python và đã được đóng gói thành file thực thi ELF bằng PyInstaller. Tôi quyết định sử dụng công cụ `pyinstxtractor` để giải nén file này.
 
 ```
@@ -92,7 +92,7 @@ python3 pyinstxtractor.py ../decoded_file
 ```
 Sau khi giải nén tôi nhận được một thư mục `decoded_file_extracted` chứa nhiều file và thư mục con. 
 
-![Toàn bộ file trong thư mục](src/assets/images/ls.png)
+![Toàn bộ file trong thư mục](/images/seetwoTHM/ls.png)
 
 Tới bước này có thể chúng ta sẽ phân vân không biết nên phân tích file nào. Tuy nhiên, dựa vào kinh nghiệm của tôi khi bạn nhìn vào list các file có thể thấy một file có tên `client.pyc` rất nổi bật vì nó có tên giống với tên file trong URL ban đầu `base64_client`. Tôi quyết định phân tích file này trước.  
 Tôi sử dụng công cụ `uncompyle6` để dịch ngược file `client.pyc` về mã nguồn Python.    
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 ```
 Sau khi chạy script trên, tôi nhận được một file `communicate.txt` chứa các lệnh đã được giải mã. Tôi mở file này và tìm thấy nhiều lệnh hệ thống đã được thực thi trên máy nạn nhân, tới đây chúng ta đã có đủ dữ liệu để có thể trả lời các câu hỏi của challenge.
 
-![Nội dung file](src/assets/images/communicate.png)
+![Nội dung file](/images/seetwoTHM/communicate.png)
 
 ## Kết luận và Trả lời câu hỏi
 1. **What is the first file that is read? Enter the full path of the file.**

@@ -27,12 +27,12 @@ Format Flag: VCSPassport{...}
 Như một thói quen mình bắt đầu phân tích file pcap bằng việc follow TCP stream để xem các luồng dữ liệu trao đổi giữa các máy thì tôi phát hiện ra một vài stream khá đáng chú ý:
 
 Stream 1:
-![TCP Stream 1](src/assets/images/vcspcap/tcp1.png)
+![TCP Stream 1](/images/vcspcap/tcp1.png)
 
 Sau khi tìm hiểu thì tôi nhận thấy đây là một dấu hiệu của việc khai thác lổ hổng Remote Code Execution (RCE) trên SharePoint thông qua việc upload file ASPX độc hại lên server.
 
 Stream 2:
-![TCP Stream 2](src/assets/images/vcspcap/tcp2.png)
+![TCP Stream 2](/images/vcspcap/tcp2.png)
 
 Tiếp tục phân tích stream tiếp theo thì tôi phát hiện có khả năng cao là attacker đang tải một mã độc về máy nạn nhân. File `raw_package` nhìn bề ngoài giống như một file Digital Certificate vì nó bắt đầu có header chuẩn là:
 ```
@@ -40,23 +40,23 @@ Tiếp tục phân tích stream tiếp theo thì tôi phát hiện có khả nă
 ```
 Tuy nhiên, sau khi tôi thử decode base64 một đoạn nhỏ của payload thì kết quả trả về khá bất ngờ khi nó tiếp tục là một đoạn text tiếp tục là bắt đầu với header `-----BEGIN CERTIFICATE-----`. Tiếp tục decode thêm một lần nữa thì tôi phát hiện ra header đã thay đổi thành `MZ` - đặc trưng của file thực thi Windows PE.
 
-![Decode Base64](src/assets/images/vcspcap/decoded.png)
+![Decode Base64](/images/vcspcap/decoded.png)
 
 Dừng lại ở đây khi đã xác định được đây là một file thực thi. Tôi tiếp tục kiêm tra các gói tin HTTP khác để tìm kiếm thêm thông tin về file này.
 
-![Các gói tin HTTP](src/assets/images/vcspcap/http.png)
+![Các gói tin HTTP](/images/vcspcap/http.png)
 Sau khi phân tích thì tôi tiến hành tải các file đã được truyền tải trong các gói tin HTTP về máy để phân tích tiếp bằng: `file --> export object --> save` 
 
 Sau khi tải về tôi có được các file sau:
 
-![Các file đã tải về](src/assets/images/vcspcap/file.png) 
+![Các file đã tải về](/images/vcspcap/file.png) 
 Phân tích nhanh các file này tôi nhận thấy có một file tôi đã xác nhận là file thực thi `raw_package`. Ngoài ra còn các file khác như `ToolPane(1).aspx` là file ASPX độc hại được upload lên server SharePoint để khai thác lỗ hổng RCE được tìm thấy trong TCP Stream 1. Chú ý thêm là 2 file `upload`  và khi tôi dùng lệnh `strings` và `cat` để trích xuất chuỗi từ file `upload` thì tôi phát hiện ra khả năng đây là một file zip được đổi tên đuôi.
-![Strings upload](src/assets/images/vcspcap/stringsupload.png)
-![Cat upload](src/assets/images/vcspcap/catupload.png)
+![Strings upload](/images/vcspcap/stringsupload.png)
+![Cat upload](/images/vcspcap/catupload.png)
 
 Phân tích một chút đoạn trên tôi nhận thấy có các chuỗi liên quan đến Chrome như `chrome_health_result` và `chrome_service_result`. Tôi đoán đây có thể là file zip chứa dữ liệu đánh cắp từ trình duyệt Chrome của nạn nhân. Và vì sao tôi có thể nhận biết thì theo tìm hiểu thì file zip có header chuẩn là `PK` và trong đoạn trích xuất chuỗi trên tôi đã thấy ký tự `P`, ngoài ra còn có đoạn `--e189ad38...` còn cho biết gói tin này đang gửi một file đính kèm ở đây là file zip. 
 Vì vậy tôi đã thử tiến hành đổi đuôi file `upload` thành `upload.zip` và giải nén thử:
-![Unzip upload](src/assets/images/vcspcap/unzipupload.png)
+![Unzip upload](/images/vcspcap/unzipupload.png)
 
 Để giải nén file zip này yêu cầu cần một password. Tới đây chúng ta đã có 2 luồng thông tin khá quan trọng:
 1. File thực thi `raw_package` có thể là mã độc được tải về máy nạn nhân.
@@ -127,7 +127,7 @@ malware.exe: PE32+ executable for MS Windows 5.02 (console), x86-64, 18 sections
 Trong quá trình phân tích nhanh bằng lệnh `strings` thì tôi không thu được kết quả gì đặc biệt. Tuy nhiên phải chú ý rằng đây là một file được thiết kế để chạy trên máy Windows vậy nên khả năng cao là chúng sử dụng bảng mã `UTF-16LE` thay vì bảng mã ASCII thông thường. Vì vậy tôi đã sử dụng lệnh `strings -el malware.exe` để trích xuất chuỗi với bảng mã UTF-16LE. 
 (Các bạn có thể tìm hiểu kỹ hơn trên google)
 
-![Strings UTF-16LE](src/assets/images/vcspcap/stringsutf16le.png)
+![Strings UTF-16LE](/images/vcspcap/stringsutf16le.png)
 
 Chú ý ngay 3 dòng đầu tiên có thể thấy
 ```

@@ -1,146 +1,127 @@
 ---
 author: NmToan
 date: 2026-04-18T04:59:04.866Z
-lastmod: 2026-04-18T13:39:20.763Z
+lastmod: 2026-04-27T00:00:00.000Z
 title: Soulmate Squ1rrel Writeup
-slug:  
+slug:
 featured: false
 draft: false
 tags:
   - Misc
-  
-description:  None
-  
+description: Write-up of the latent-vector optimization used to push the Tom Cruise score past the flag threshold
 ---
-## Challenge overview
-Describe:
+
+# Soulmate Squ1rrel Write-up
+
+## Challenge Overview
+
+The challenge presents a web app with the following premise:
+
+```text
 the great church of scientology is, as always, in search of wife candidates for the Scientology Freedom Medal of Valor-winning actor tom cruise.
 
 this used to be a manual process, but apparently these days you can automate anything with ai?
+```
 
-https://soulmate.squ1rrel.dev
+Link:
 
-At first glance, this challenge looks like a simple web app: enter a birthday and get a generated “soulmate”.
-However, after reading the source code, the real goal becomes clear:
+- `https://soulmate.squ1rrel.dev`
 
-- the backend generates a face
-- a celebrity classifier scores that face
-- if the **Tom Cruise** score is at least `0.15`, the backend returns the flag
+At first glance, it looks like a simple app that takes a birthday and generates a "soulmate." But after reading the source code, the actual objective becomes clear:
 
----
+- the backend generates a face,
+- a celebrity classifier scores that face,
+- if the **Tom Cruise** score reaches at least `0.15`, the backend returns the flag.
 
-## Initial inspection
+So this is not really a guessing challenge. It is an optimization problem over the model input.
 
-The most relevant files were:
+## Solve Strategy
+
+The entire approach can be summarized in four steps:
+
+1. inspect the backend and find the real flag condition,
+2. identify the endpoint that allows direct latent control,
+3. use that endpoint as a scoring oracle,
+4. optimize the vector `u` until `tom_score >= 0.15`.
+
+## 1. Find the Real Success Condition
+
+The most relevant files are:
 
 - `backend/app.py`
 - `models/inference.py`
 - `frontend/static/js/app.js`
 - `frontend/templates/index.html`
 
-### Analysis
+The frontend only exposes the public flow. The real solve path lives in the backend and model code.
 
-The frontend only shows the public flow of the app.
-The real solve path comes from the backend and model code, because that is where the score is computed and the flag condition is implemented. 
-
----
-
-## Finding the real success condition
-
-In `backend/app.py`, the important routes are:
-
-- `GET /generate-random`
-- `POST /submit-u`
-- `GET /health` 
-
-The important detail is that the flag is only returned when the backend determines that the generated candidate has a high enough **Tom Cruise** score.
-If the score is below the threshold, the server returns a rejection message.
-If the score is above the threshold, it reads `flag.txt` and returns the flag in JSON. 
-
-### Analysis
-
-This shows that the challenge is not about guessing a birthday or exploiting a normal web bug.
-The real task is to make the generated image score highly enough as Tom Cruise.
-
----
-
-## Understanding how the score is computed
-
-In `models/inference.py`, the code defines:
+In `models/inference.py`, the critical line is:
 
 ```python
 TOM_SCORE_THRESHOLD = 0.15
 ```
 
-The backend uses a celebrity classifier and extracts the probability for the label `"Tom Cruise"`.
-That value is compared against the threshold. If it is at least `0.15`, the challenge is solved. 
+The backend extracts the probability for the `"Tom Cruise"` label and compares it against that threshold. If the score is below `0.15`, the server returns a rejection. If it reaches the threshold, it reads `flag.txt` and returns the flag as JSON.
 
-So the problem becomes:
+So the real problem is:
 
 > Find an input that makes the generated face score at least `0.15` as Tom Cruise.
 
----
+## 2. Why the Frontend Is Not the Right Path
 
-## Why the frontend is not enough
+From the UI, the visible route is:
 
-From the frontend code, the visible UI only uses `GET /generate-random`.
-That endpoint derives a seed from a birthday and generates one random face. 
-If we only use the frontend, we do not have much control.
-We are basically hoping that some birthday produces a face that happens to score highly as Tom Cruise.
+- `GET /generate-random`
 
-That is possible in theory, but it is not the intended way to solve the challenge.
+That endpoint derives a seed from a birthday and generates one face. If we only use that flow, we have almost no direct control and are basically hoping that some birthday happens to produce a face with a high Tom Cruise score.
 
----
+That might work by chance, but it is not the clean or intended route.
 
-## Discovering the intended solve path: `POST /submit-u`
+## 3. The Important Endpoint: `POST /submit-u`
 
-The important backend endpoint is:
+The key backend endpoint is:
 
 ```http
 POST /submit-u
 ```
 
-This endpoint accepts a vector `u`, maps it through the PCA latent mapper, generates a face, scores the face with the celebrity classifier, and returns the result.
-If the Tom Cruise score reaches the threshold, the flag is returned.
+This endpoint accepts a vector `u`, maps it through the PCA latent mapper, generates a face, scores it with the celebrity classifier, and returns the result.
 
-This is the key observation of the challenge.
+That changes the problem completely:
 
-Instead of controlling the model indirectly through a birthday, we can control it directly through a latent vector.
-That changes the problem into a search problem:
+- instead of indirect control through a birthday,
+- we get direct control over the latent vector.
 
-> Find a control vector `u` that makes the Tom Cruise score exceed `0.15`.
+At that point, the challenge becomes an 8-dimensional search problem:
 
----
+> Find a vector `u` that maximizes the `"Tom Cruise"` score.
 
-## 6. Querying `/health` to understand the search space
+## 4. Query `/health` to Understand the Search Space
 
-Before searching, it helps to inspect the service configuration.
+Before optimizing, I checked the service configuration:
 
 ```bash
 curl -sS https://soulmate.squ1rrel.dev/health
 ```
 
-The health endpoint reveals that:
+The response reveals useful information:
 
-- the threshold is `0.15`
-- the PCA mapper is loaded
-- the control dimension is `8`
-- each coordinate has lower and upper bounds. 
+- the threshold is `0.15`,
+- the PCA mapper is loaded,
+- `control_dim = 8`,
+- every coordinate has lower and upper bounds.
 
-This means the optimization problem is:
-- input: an 8-dimensional vector
-- each dimension is bounded
-- objective: maximize the Tom Cruise score
+So the optimization problem is:
 
-That is a small enough space that simple search methods are sufficient.
+- input: an 8-dimensional vector,
+- each dimension is bounded,
+- objective: maximize `tom_score`.
 
----
+This is small enough for simple random search followed by coordinate refinement.
 
-## 7. Verifying the oracle with a simple input
+## 5. Verify the Oracle with the Zero Vector
 
-The first check is to send the zero vector.
-
-### Script: `zero_test.py`
+The first sanity check is to submit the all-zero vector:
 
 ```python
 import requests
@@ -158,24 +139,17 @@ r = requests.post(
 print(json.dumps(r.json(), indent=2))
 ```
 
-### Expected result
+In the original solve, this returned a Tom Cruise score around `0.0691`, which is below the threshold.
 
-This should return a Tom Cruise score below the threshold.
-In the original write-up, the zero vector gave a score around `0.0691`. 
+That confirms that `/submit-u` works as a scoring oracle:
 
-This confirms that `/submit-u` can be used as a **scoring oracle**:
+1. choose `u`,
+2. let the backend generate a face,
+3. read back the Tom Cruise score.
 
-- we choose `u`
-- the backend generates a face
-- the backend tells us the Tom Cruise score
+## 6. Probe Each Dimension Individually
 
----
-
-## 8. Measuring the effect of individual PCA dimensions
-
-Before running a broader search, it is useful to test each PCA coordinate separately while keeping the other dimensions fixed at zero.
-
-### Script: `axis_probe.py`
+Before a broader search, I tested each PCA coordinate independently while holding the others at zero:
 
 ```python
 import requests
@@ -208,22 +182,17 @@ for i in range(dim):
         print(json.dumps(resp, indent=2))
 ```
 
+This helps answer:
 
-This step helps answer:
+1. can a single dimension solve the challenge,
+2. which directions are promising,
+3. whether a combination of coordinates is required.
 
-- can one coordinate solve the challenge by itself?
-- which directions seem useful?
-- do we need a combination of multiple coordinates?
+The conclusion was that no single coordinate was sufficient, so the solve required a multi-dimensional combination.
 
-The conclusion from the original solve was that no single coordinate alone was enough to cross the threshold, so a combination of dimensions was necessary. 
+## 7. Random Search for a Good Starting Point
 
----
-
-## 9. Random search for a good starting point
-
-Once the search space is understood, the next step is to sample random vectors inside the valid bounds and keep the best one found so far.
-
-### Script: `random_search.py`
+Once the search space was understood, I sampled random vectors within the allowed bounds and kept track of the best result:
 
 ```python
 import random
@@ -270,42 +239,30 @@ for i in range(500):
         break
 ```
 
-The purpose of random search is not necessarily to solve the challenge immediately.
-Its main purpose is to find a promising starting point in the search space.
-
-In the original write-up, the best random candidate reached about:
+In the original run, random search did not solve the challenge immediately, but it found a strong candidate with a score around:
 
 ```text
 0.0942730382
 ```
 
-with a vector close to:
+Vector:
 
 ```text
 [-12.9805, 21.9629, 1.8578, 11.0075, 0.5764, 4.5666, -11.1215, 2.4167]
 ```
 
-### Note
+That was good enough to use as a refinement starting point.
 
-Random search can involve some luck.
-Depending on the sampled vectors, it may find a strong candidate quickly, or it may take longer to reach a good score.
+## 8. Coordinate Search to Cross the Threshold
 
----
+From that candidate, I switched to a simple coordinate-wise hill-climbing process:
 
-## 10. Refining the candidate with coordinate search
+1. keep 7 coordinates fixed,
+2. sweep the remaining coordinate across its range,
+3. keep the value that improves the score the most,
+4. repeat over all dimensions for multiple rounds.
 
-After obtaining a strong candidate from random search, the next step is to refine it.
-
-The idea is:
-
-1. keep 7 coordinates fixed
-2. sweep the remaining coordinate across its valid range
-3. keep the value that improves the score the most
-4. repeat for the next coordinate
-
-This is a simple coordinate search / hill-climbing method.
-
-### Script: `coordinate_search.py`
+Script:
 
 ```python
 import numpy as np
@@ -328,7 +285,6 @@ def query(u):
     )
     return r.json()
 
-# starting point from random search
 u = [-12.9805, 21.9629, 1.8578, 11.0075, 0.5764, 4.5666, -11.1215, 2.4167]
 
 resp = query(u)
@@ -373,23 +329,16 @@ for round_id in range(3):
         break
 ```
 
+In this solve:
 
-This is the step that turns a good candidate into a successful one.
+- tuning dimension 0 improved the score to about `0.140278`,
+- tuning dimension 1 pushed it to about `0.151170`.
 
-According to the original write-up:
+That was enough to cross the `0.15` threshold.
 
-- adjusting dimension 0 improved the score to about `0.140278`
-- adjusting dimension 1 then improved it to about `0.151170`
+## 9. Submit the Final Vector
 
-That was enough to cross the threshold and recover the flag.
-
----
-
-## 11. Submitting the final vector
-
-Once the final vector is known, it can be submitted directly.
-
-### Script: `final_submit.py`
+Once the winning vector is known, it can be submitted directly:
 
 ```python
 import requests
@@ -408,11 +357,24 @@ r = requests.post(
 print(json.dumps(r.json(), indent=2))
 ```
 
-### Expected result
-
-The backend returns the flag when this vector is submitted. The flag is:
+The backend returns:
 
 ```text
 squ1rrel{7h3_church_c0n6r47ul4735_mr5_cru153!!}
-``` 
+```
 
+## Conclusion
+
+What makes this challenge fun is that it looks like a simple web input problem, but the real task is latent-space optimization:
+
+1. the backend gates the flag on the Tom Cruise score,
+2. `/submit-u` exposes direct latent control,
+3. `/health` reveals the full bounded search space,
+4. random search finds a promising seed,
+5. coordinate search pushes it over the threshold.
+
+Final flag:
+
+```text
+squ1rrel{7h3_church_c0n6r47ul4735_mr5_cru153!!}
+```

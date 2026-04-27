@@ -1,76 +1,74 @@
 ---
 author: NmToan
 date: 2025-12-29T04:59:04.866Z
-lastmod: 2025-12-29T13:39:20.763Z
+lastmod: 2026-04-27T00:00:00.000Z
 title: WOW!
-slug:  
+slug:
 featured: false
 draft: false
 tags:
   - Forensics
-  
-description:  |
-  
+description: Write-up of the pipeline from `report.pdf` to the recovered SSTV image channel `Y.png`
 ---
-# Write-up: `report.pdf` -> `Y.png`
 
-Muc tieu cua tai lieu nay la ghi lai day du toan bo qua trinh phan tich tu luc nhan file `report.pdf` cho den khi giai ma ra duoc anh SSTV va tach cac kenh mau, trong do co file `Y.png`.
+# Write-up: `report.pdf` to `Y.png`
 
-Tai lieu nay dung dung cac file da tao trong workspace de ban co the tiep tuc phan tich tu moc `Y.png` ma khong can lam lai tu dau.
+This post documents the full path from the initial `report.pdf` file to the most useful analysis artifact, `Y.png`. The steps are organized in the same order as the actual solve: detect embedded audio in the PDF, extract the WAV stream, identify the SSTV mode, reconstruct the image, and finally derive the luminance channel for further work.
 
-## 1. Tong quan challenge
+## Overview
 
-Ban dau chi co file:
+At the beginning, the only provided file was:
 
 - `report.pdf`
 
-Noi dung trong PDF noi ve:
+Two hints inside the document immediately stood out:
 
-- co mot ban tin vo tuyen bat thu duoc trong sa mac
-- co cau "I will transfer the data utilizing Papa Delta"
-- co mo ta vat the "something similar to the galaxy"
+- `"I will transfer the data utilizing Papa Delta"`
+- `"something similar to the galaxy"`
 
-Ngay tu phan text da co hai huong quan trong:
+These suggest two key ideas:
 
-- co du lieu am thanh/an tin hieu duoc dinh kem trong PDF
-- "Papa Delta" rat giong cach goi mode `PD` trong SSTV
+1. the PDF likely contains an embedded payload rather than just text,
+2. `"Papa Delta"` strongly resembles the naming used by SSTV `PD` modes.
 
-## 2. Kiem tra file ban dau
+That leads to the main hypothesis for the challenge:
 
-Buoc dau tien la liet ke file va xac nhan workspace:
+**the PDF contains an audio signal that decodes into an image.**
+
+## Full Pipeline
+
+The workflow for this challenge can be summarized as:
+
+1. inspect `report.pdf` for anything unusual,
+2. identify and extract the embedded audio object,
+3. determine that the signal is SSTV `PD290`,
+4. write a decoder to reconstruct the image,
+5. recover `pd290_mono32.png`,
+6. separate channels and derive `Y.png`.
+
+## 1. Inspect the Original PDF
+
+I first checked the workspace and file metadata:
 
 ```powershell
 Get-ChildItem -Force
 rg --files
-```
-
-Sau do kiem tra nhanh thuoc tinh file:
-
-```powershell
 Get-Item report.pdf | Format-List *
 ```
 
-Ket qua quan trong:
+The important observation is that `report.pdf` is about `5.2 MB`, which is much larger than a normal text-heavy PDF and strongly suggests a large embedded object.
 
-- `report.pdf` co kich thuoc khoang `5.2 MB`
-- kich thuoc lon hon rat nhieu so voi mot PDF text thong thuong
-- kha nang cao co object nhung lon ben trong PDF
+## 2. Read Text and Objects from the PDF
 
-## 3. Doc text thuan va object cua PDF
+Since the environment did not provide tools like `pdfinfo`, `qpdf`, or `exiftool`, I switched to `strings` and direct Python parsing.
 
-Do may khong co day du cac tool Linux quen thuoc nhu `pdfinfo`, `qpdf`, `exiftool`, minh chuyen sang doc truc tiep bang `strings` va Python.
-
-Lenh thu text thuan:
+Quick check:
 
 ```powershell
 strings -n 6 report.pdf | Select-Object -First 300
 ```
 
-Trong output co cac object quan trong:
-
-- object page
-- object content
-- va dac biet la mot object:
+The most interesting object description was:
 
 ```text
 /Type /Sound /R 48000 /C 1 /B 16 /E /muLaw
@@ -78,49 +76,28 @@ Trong output co cac object quan trong:
 /Filter /FlateDecode
 ```
 
-Day la dau hieu manh nhat cho thay:
+This immediately suggests:
 
-- PDF co nhung mot `Sound object`
-- stream am thanh da bi nen bang `FlateDecode`
-- payload am thanh rat lon, hon `5 MB`
+- the PDF contains a `Sound` object,
+- the stream is compressed with `FlateDecode`,
+- the embedded payload is large enough to be the main target.
 
-## 4. Liet ke cac object stream trong PDF bang Python
+## 3. Locate and Extract the Audio Object
 
-De chac chan hon, minh viet mot doan Python nho:
+To verify that, I enumerated stream objects and decompressed the `FlateDecode` ones. The key result was:
 
-- quet tung object trong PDF
-- tim object co `stream`
-- neu co `FlateDecode` thi giai nen
-- in ra preview
-
-Y tuong cua script:
-
-```python
-import re, zlib, pathlib
-p = pathlib.Path('report.pdf').read_bytes()
-for m in re.finditer(rb'(\d+)\s+(\d+)\s+obj(.*?)endobj', p, re.S):
-    ...
-```
-
-Ket qua quan trong nhat:
-
-- `OBJ 25` la `Type /Sound`
-- stream raw dai `5155788` bytes
-- sau khi `zlib.decompress()` thi stream dai `56203108` bytes
-- preview cua stream sau giai nen bat dau bang:
+- `OBJ 25` is the embedded sound object,
+- the compressed stream is about `5,155,788` bytes,
+- after decompression it expands to about `56,203,108` bytes,
+- the decompressed data starts with:
 
 ```text
 RIFF....WAVEfmt ...
 ```
 
-Tuc la:
+So the payload is a genuine WAV file.
 
-- stream giai nen thanh mot file `WAV` that
-- du lieu can phan tich chinh la am thanh nhung trong PDF
-
-## 5. Trich xuat object am thanh ra file `extracted.wav`
-
-Sau khi xac nhan object `25` la audio, minh trich rieng no ra:
+I extracted it with:
 
 ```python
 import re, zlib, pathlib
@@ -133,315 +110,180 @@ out = zlib.decompress(stream)
 pathlib.Path('extracted.wav').write_bytes(out)
 ```
 
-Ket qua:
-
-- tao ra file `extracted.wav`
-- kich thuoc khoang `56 MB`
-
-File duoc tao ra trong workspace:
+Output:
 
 - `extracted.wav`
 
-## 6. Kiem tra header va cau truc cua WAV
+## 4. Re-evaluate the WAV Structure
 
-Ban dau co ve nhu file la:
+At first glance, the WAV header makes the file look like:
 
-- stereo
-- 16-bit
-- 48000 Hz
+- stereo,
+- 16-bit,
+- 48000 Hz.
 
-nhung khi doc ky hon thi thay header hoi "la".
+But when I parsed the payload as `int16`, the channels looked suspicious:
 
-Minh dung Python kiem tra:
+- the left side varied heavily,
+- the right side was mostly `0` or `-1`.
 
-```python
-import pathlib, struct
-p = pathlib.Path('extracted.wav').read_bytes()
-print(p[:64])
-print(p.find(b'fmt '))
-print(p.find(b'data'))
-```
-
-Quan sat quan trong:
-
-- file bat dau bang `RIFF ... WAVE`
-- co `fmt ` chunk
-- co `data` chunk
-- nhung cach dien giai theo `wave` cho ket qua khong on dinh
-
-Minh tiep tuc doc payload `data` truc tiep thay vi phu thuoc vao parser `wave`.
-
-## 7. Phat hien header dang "giau" mono 32-bit
-
-Khi doc `data` chunk theo `int16`, kieu du lieu trong hai kenh nhin rat ky:
-
-- kenh trai co bien do thay doi that
-- kenh phai gan nhu chi toan `0` hoac `-1`
-
-Luc do minh thu doc cung payload bang `int32`:
+Reading the same raw payload as `int32` produced much more coherent data:
 
 ```python
 np.frombuffer(raw, dtype='<i4')
 ```
 
-Ket qua hop ly hon nhieu.
+This led to an important conclusion:
 
-Suy ra:
+- the header was arranged to look like `stereo 16-bit`,
+- but the payload made much more sense as **mono 32-bit PCM**.
 
-- header WAV duoc sap dat de trong giong `stereo 16-bit`
-- nhung payload thuc te hop ly hon khi xem la `mono 32-bit PCM`
+That detail matters because the rest of the SSTV decoding depends on interpreting the signal correctly.
 
-Day la mot phat hien rat quan trong, vi no anh huong truc tiep toi viec giai dieu che SSTV.
+## 5. Identify the Signal as SSTV
 
-## 8. Phan tich pho tan so cua `extracted.wav`
-
-De xem audio la gi, minh dung `matplotlib` ve spectrogram:
+Next, I plotted a spectrogram for `extracted.wav`:
 
 ```python
 ax.specgram(sig, NFFT=4096, Fs=48000, noverlap=3072, cmap='magma')
 ```
 
-Sinh ra:
+Artifacts produced:
 
 - `spectrogram_full.png`
 - `spectrogram_full2.png`
 
-Quan sat:
+The pattern showed:
 
-- co cac vach lap lai rat deu
-- day la tin hieu dieu che, khong phai nhac hay voice thong thuong
-- thoi luong tong the khoang `292.7 s`
+- evenly repeating vertical structures,
+- a modulated signal rather than music or speech,
+- a very strong SSTV signature.
 
-Sau do minh tinh khoang cach giua cac sync pulse va thay:
+I then measured the spacing between sync pulses and found that they were roughly `44993` samples apart.
 
-- pulse lap lai khoang `44993` samples
+## 6. Why the Mode Is `PD290`
 
-Minh so sanh voi cac mode PD:
+Comparing the measured pulse spacing against the SSTV `PD` family, `PD290` matched best.
 
-- `PD240` neu sample rate la `44993 Hz`
-- `PD290` neu sample rate la `~48000 Hz`
+Reasons:
 
-Do sample rate logic cua file la `48000`, mode hop ly nhat la:
+- assuming `PD290`, the inferred sample rate is about `48003.8 Hz`, which is nearly identical to `48000 Hz`,
+- the signal contained around `308` pulses,
+- `PD290` produces an `800 x 616` image,
+- the scanline structure also fits the expected `PD290` layout.
 
-- `PD290`
+So the most consistent conclusion is:
 
-## 9. Vi sao xac dinh mode la `PD290`
+- the embedded signal is **SSTV mode `PD290`**.
 
-Minh dung cong thuc scanline cua PD mode:
+## 7. Cross-check with Reference Implementations
 
-```text
-scanline = 0.020 + 0.00208 + 4 * channelSeconds
-```
-
-So sanh cac mode:
-
-- `PD50`
-- `PD90`
-- `PD120`
-- `PD160`
-- `PD180`
-- `PD240`
-- `PD290`
-
-Khoang cach pulse do duoc la `44993 samples`.
-
-Tinh nguoc ra:
-
-- neu mode la `PD290` thi sample rate xap xi `48003.8 Hz`
-- day gan nhu khop hoan hao voi `48000 Hz`
-
-Them vao do:
-
-- so pulse tim duoc la `308`
-- `PD290` co anh kich thuoc `800 x 616`
-- mode nay dung `308` scanline, moi scanline sinh ra 2 dong anh
-
-Suy ra rat chac:
-
-- day la SSTV `PD290`
-
-## 10. Doi chieu voi implementation goc trong repo `robot36`
-
-De tranh giai tay sai cong thuc, minh clone va doc repo tham khao:
+To avoid hand-decoding the format incorrectly, I compared my findings with existing SSTV implementations:
 
 - `_tmp_robot36`
 - `_tmp_PicoSSTV`
 - `_tmp_sstv_decoder`
 
-Trong `_tmp_robot36`, file quan trong nhat la:
+From `robot36`, the important details for `PD290` are:
 
-- `_tmp_robot36/app/src/main/java/xdsopl/robot36/PaulDon.java`
-- `_tmp_robot36/app/src/main/java/xdsopl/robot36/Decoder.java`
-- `_tmp_robot36/app/src/main/java/xdsopl/robot36/Demodulator.java`
-
-Tu `Decoder.java`, minh rut ra duoc:
-
-- VIS code `94` ung voi `PD290`
-- kich thuoc anh `800 x 616`
+- VIS code: `94`
+- image size: `800 x 616`
 - `channelSeconds = 0.2288`
 
-Tu `PaulDon.java`, minh rut ra bo cuc scanline:
+Each scanline follows this structure:
 
-- `sync pulse`: `20 ms`
-- `sync porch`: `2.08 ms`
-- 4 phan lien tiep:
-  - `Y even`
-  - `V average`
-  - `U average`
-  - `Y odd`
+1. `sync pulse`
+2. `sync porch`
+3. `Y even`
+4. `V average`
+5. `U average`
+6. `Y odd`
 
-Offset tinh theo sample:
+That confirmed the exact sampling layout needed for decoding.
 
-- `begin = round(0.00208 * fs)`
-- `v_avg = round((0.00208 + 0.2288) * fs)`
-- `u_avg = round((0.00208 + 0.2288 * 2) * fs)`
-- `y_odd = round((0.00208 + 0.2288 * 3) * fs)`
+## 8. Write the Decoder
 
-## 11. Demod tin hieu theo huong giong `robot36`
+I wrote a Python decoder that follows the same general logic as `robot36`:
 
-Minh tu viet decoder Python bat chuoc huong xu ly trong `robot36`:
+1. read `mono 32-bit` samples from `extracted.wav`,
+2. mix the signal down around `1900 Hz`,
+3. apply a low-pass filter,
+4. FM-demodulate,
+5. detect `1200 Hz` sync pulses,
+6. segment the stream into scanlines,
+7. sample the `Y / V / U / Y` sections,
+8. convert `YUV -> RGB`.
 
-1. Doc `mono 32-bit` tu `extracted.wav`
-2. Mix xuong baseband quanh `1900 Hz`
-3. Low-pass quanh bang thong SSTV
-4. FM demod de dua ve tan so chuan hoa
-5. Tim sync pulse `1200 Hz`
-6. Tinh chieu dai scanline
-7. Lay cac mau theo bo cuc `Y / V / U / Y`
-8. Chuyen `YUV -> RGB`
-
-Phan FM demod duoc mo phong bang:
+Key demod step:
 
 ```python
-freq[1:] = (fs / (bw*np.pi)) * np.angle(base[1:] * np.conj(base[:-1]))
+freq[1:] = (fs / (bw * np.pi)) * np.angle(base[1:] * np.conj(base[:-1]))
 ```
 
-Sau do minh smooth tin hieu va tim pulse:
-
-```python
-mask = smooth < -1.5
-```
-
-## 12. Dung lai anh SSTV dau tien
-
-Sau khi map theo bo cuc `PD290`, minh dung duoc anh:
+Intermediate outputs:
 
 - `pd290_decoded.png`
-
-Sau do thu them phien ban lam min giong EMA trong `robot36`:
-
 - `pd290_decoded_ema.png`
 
-Cuoi cung, sau khi hieu ro hon ve payload `mono 32-bit`, minh tao lai anh tot nhat:
+Best final image:
 
 - `pd290_mono32.png`
 
-Anh nay la moc quan trong nhat cua qua trinh giai ma audio -> image.
+## 9. What `pd290_mono32.png` Shows
 
-## 13. Hinh dang cua `pd290_mono32.png`
+The recovered image contains:
 
-Anh thu duoc co dac diem:
+- a bright background,
+- a dark spiral-like structure,
+- a shape strongly resembling a galaxy or whirlpool.
 
-- nen sang
-- mot khoi den xep thanh dang xoan oc
-- rat giong hinh thien ha xoan / whirlpool / galaxy stylized
-
-Day phu hop voi text trong PDF:
+This matches the text hint from the PDF exactly:
 
 ```text
 something similar to the galaxy
 ```
 
-Dong thoi, no xac nhan huong SSTV `PD` la dung.
+At this stage, both earlier hints are confirmed:
 
-## 14. Kiem tra lai moc sync va VIS header
+- `"Papa Delta"` points to SSTV `PD`,
+- `"galaxy"` describes the recovered image.
 
-Sau nay minh con kiem tra ky hon:
+## 10. Separate RGB and Bit Planes
 
-- tim theo `start of sync pulse`
-- thay vi chi dua vao `end of sync pulse`
+Once `pd290_mono32.png` was available, I began extracting useful derived views.
 
-Anh tao lai:
-
-- `pd290_startsync.png`
-
-Quan sat:
-
-- ve tong the van ra cung mot hinh xoan oc
-- khong lam thay doi ban chat ket qua: audio duoc giai dung thanh mot anh dang galaxy/spiral
-
-Minh cung doc duoc VIS header o dau file va thay:
-
-- cac bit phu hop voi mode `PD290`
-
-Nen ket luan den day van giu nguyen:
-
-- am thanh trong PDF la SSTV `PD290`
-
-## 15. Phan tich sau anh `pd290_mono32.png`
-
-Sau khi da co anh, minh bat dau mo rong theo nhieu huong:
-
-- xoay anh
-- flip
-- log-polar
-- polar
-- untwirl
-- dechirp
-- FFT
-- zoom center
-- tim QR
-- tach bit plane
-- tach kenh mau
-
-Nhung theo yeu cau cua ban, tai lieu nay se dung chi tiet den moc tim ra `Y.png`.
-
-## 16. Tach cac kenh mau RGB
-
-Tu `pd290_mono32.png`, minh tach 3 kenh mau:
+### RGB Channels
 
 ```python
 img = np.array(Image.open('pd290_mono32.png').convert('RGB'))
-Image.fromarray(img[:,:,0]).save('chan_R.png')
-Image.fromarray(img[:,:,1]).save('chan_G.png')
-Image.fromarray(img[:,:,2]).save('chan_B.png')
+Image.fromarray(img[:, :, 0]).save('chan_R.png')
+Image.fromarray(img[:, :, 1]).save('chan_G.png')
+Image.fromarray(img[:, :, 2]).save('chan_B.png')
 ```
 
-Sinh ra:
+Outputs:
 
 - `chan_R.png`
 - `chan_G.png`
 - `chan_B.png`
 
-Y nghia:
-
-- de xem thong tin co nam rieng tren mot kenh khong
-- de phuc vu cac phep bien doi tiep theo
-
-## 17. Tao bit-planes cho tung kenh
-
-Minh tiep tuc tach bit-plane de tim watermark/stego:
+### Bit Planes
 
 ```python
-for c,name in enumerate('RGB'):
+for c, name in enumerate('RGB'):
     for b in range(8):
-        plane=((img[:,:,c]>>b)&1)*255
+        plane = ((img[:, :, c] >> b) & 1) * 255
 ```
 
-Sinh ra:
+Outputs:
 
-- `bit_R0.png` ... `bit_R7.png`
-- `bit_G0.png` ... `bit_G7.png`
-- `bit_B0.png` ... `bit_B7.png`
+- `bit_R0.png` to `bit_R7.png`
+- `bit_G0.png` to `bit_G7.png`
+- `bit_B0.png` to `bit_B7.png`
 
-Buoc nay huu ich de:
+### Channel Difference Images
 
-- xem co text/QR trong LSB/MSB khong
-- kiem tra stego muc do co ban
-
-## 18. Tao cac anh difference giua cac kenh
-
-De lam ro thong tin an trong do lech mau, minh tao them:
+I also created:
 
 - `RminusG.png`
 - `BminusG.png`
@@ -449,49 +291,37 @@ De lam ro thong tin an trong do lech mau, minh tao them:
 - `GminusRB.png`
 - `sum.png`
 
-Y tuong:
+These are useful for highlighting details that are not distributed evenly across the color channels.
 
-- neu chu/hoa tiet duoc nhung nhat trong kenh U/V hoac trong sai khac giua cac kenh, anh difference se lam no noi len
+## 11. Convert Approximately from RGB to `YUV`
 
-## 19. Tinh xap xi kenh YUV tu RGB
-
-Sau do minh quy doi RGB -> YUV gan dung:
+From `pd290_mono32.png`, I computed approximate `Y`, `U`, and `V` channels:
 
 ```python
-Y = 0.299*R + 0.587*G + 0.114*B
-U = -0.14713*R - 0.28886*G + 0.436*B
-V = 0.615*R - 0.51499*G - 0.10001*B
+Y = 0.299 * R + 0.587 * G + 0.114 * B
+U = -0.14713 * R - 0.28886 * G + 0.436 * B
+V = 0.615 * R - 0.51499 * G - 0.10001 * B
 ```
 
-Tu day sinh ra 3 file:
+Outputs:
 
 - `Y.png`
 - `U.png`
 - `V.png`
 
-Day la moc ma ban muon dung lai de tu phan tich tiep.
+Of these, `Y.png` is the most important starting point for further analysis.
 
-## 20. Y nghia cua `Y.png`
+## 12. Why `Y.png` Matters
 
-`Y.png` la kenh do sang xap xi cua anh `pd290_mono32.png`.
+`Y.png` is the approximate luminance channel of the recovered image. It is especially useful because:
 
-No huu ich vi:
+- if hidden content is primarily stored in brightness, this view preserves it best,
+- it reduces color-related distractions,
+- it is a natural input for thresholding, morphology, OCR, polar unwrap, FFT, or contrast enhancement.
 
-- neu thong tin an chu yeu nam trong do sang thi `Y.png` se giu no ro nhat
-- loai bo phan nao anh huong cua sai khac mau
-- phu hop de tiep tuc cac phep OCR, threshold, morph, polar unwrap, FFT, hoac stego visual
+That is why this write-up intentionally stops at `Y.png`: it is the cleanest handoff point for the next stage of the challenge.
 
-Trong workspace hien co:
-
-- `Y.png`
-- `U.png`
-- `V.png`
-
-va ban co the tiep tuc phan tich tu day.
-
-## 21. Danh sach cac file chinh da tao theo thu tu logic
-
-Theo thu tu quan trong cua pipeline, cac file can quan tam nhat la:
+## Important Files in Order
 
 1. `report.pdf`
 2. `extracted.wav`
@@ -503,51 +333,25 @@ Theo thu tu quan trong cua pipeline, cac file can quan tam nhat la:
 8. `chan_R.png`
 9. `chan_G.png`
 10. `chan_B.png`
-11. `bit_R0.png` ... `bit_B7.png`
-12. `RminusG.png`
-13. `BminusG.png`
-14. `RminusB.png`
-15. `GminusRB.png`
-16. `sum.png`
-17. `Y.png`
-18. `U.png`
-19. `V.png`
+11. `RminusG.png`
+12. `BminusG.png`
+13. `RminusB.png`
+14. `GminusRB.png`
+15. `sum.png`
+16. `Y.png`
+17. `U.png`
+18. `V.png`
 
-## 22. Tom tat ky thuat
+## Conclusion
 
-Toan bo luong xu ly tu A -> Z den `Y.png` la:
+The full logic of the solve is:
 
-1. Xac nhan `report.pdf` co kich thuoc bat thuong.
-2. Doc object trong PDF va phat hien `Type /Sound`.
-3. Giai nen stream am thanh tu object `25`.
-4. Xuat stream thanh `extracted.wav`.
-5. Phat hien payload hop ly hon khi xem la `mono 32-bit`.
-6. Ve spectrogram va nhan ra tin hieu SSTV.
-7. So sanh scanline voi cac mode `PD`.
-8. Ket luan mode la `PD290`.
-9. Doi chieu cong thuc voi implementation `robot36`.
-10. Tu viet decoder Python theo bo cuc `Y/V/U/Y`.
-11. Dung anh `pd290_decoded.png`.
-12. Tinh chinh smoothing va cach doc payload, dung anh `pd290_mono32.png`.
-13. Tach RGB, bit-plane, anh difference.
-14. Quy doi sang xap xi `Y/U/V`.
-15. Sinh ra `Y.png`, `U.png`, `V.png`.
-
-## 23. Ghi chu cho lan phan tich tiep theo
-
-Neu tiep tuc tu `Y.png`, cac huong hop ly nhat la:
-
-- threshold nhieu muc
-- morphology open/close
-- polar hoac log-polar unwrap
-- OCR tren cac crop sau threshold
-- contour analysis
-- local contrast enhancement
-- FFT / autocorrelation
-- skeletonization neu nghi la text bi warp
-
-Nhung trong tai lieu nay, minh dung lai tai moc:
-
-- `Y.png`
-
-de ban tiep tuc phan tich.
+1. notice that `report.pdf` contains a large embedded object,
+2. confirm that the object is audio,
+3. extract it as `extracted.wav`,
+4. realize the payload should be interpreted as `mono 32-bit`,
+5. use the spectrogram and scanline spacing to identify SSTV `PD290`,
+6. cross-check the mode layout with `robot36`,
+7. write a decoder and recover `pd290_mono32.png`,
+8. derive color and luminance views,
+9. stop at `Y.png` as the best artifact for continued analysis.

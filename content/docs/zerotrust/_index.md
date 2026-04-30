@@ -1,40 +1,75 @@
 ---
 title: "Hướng dẫn Triển khai C-ZTNA: Từ Zero đến Zero Trust"
-description: "Tài liệu tổng quan về kiến trúc và các bước triển khai hệ thống Context-Aware Zero Trust Network Access (C-ZTNA) dành cho SME."
+description: "Tài liệu tổng quan về kiến trúc và lộ trình triển khai hệ thống Context-Aware Zero Trust Network Access (C-ZTNA) dành cho SME."
 toc: true
 authors: []
 tags: ["Zero Trust", "OpenZiti", "Keycloak", "FleetDM", "OPA", "Security"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
 date: '2026-01-12'
-lastmod: '2026-03-31'
+lastmod: '2026-04-30'
 draft: false
 ---
 
-Chào mừng bạn đến với tài liệu hướng dẫn triển khai hệ thống **Context-Aware Zero Trust Network Access (C-ZTNA)**. Dự án này nhằm thay thế mô hình bảo mật "lâu đài và hào nước" (Castle and Moat) truyền thống bằng triết lý "Không bao giờ tin tưởng, Luôn luôn xác minh".
+Tài liệu này hướng dẫn triển khai một mô hình **Context-Aware Zero Trust Network Access (C-ZTNA)** theo hướng thực dụng: tách rõ từng thành phần, đi theo từng phase, kiểm tra được ở mỗi mốc và dễ mở rộng khi cần demo hoặc triển khai lab.
 
-Đây là trang gốc (root) chứa toàn bộ lộ trình xây dựng hệ thống từ con số 0.
+Thay vì đặt niềm tin vào vị trí mạng nội bộ, kiến trúc này bám theo nguyên tắc:
 
-## Kiến trúc Hệ thống Tổng thể
+- không tin mặc định bất kỳ user hay thiết bị nào,
+- xác minh liên tục danh tính và trạng thái thiết bị,
+- chỉ cấp quyền tối thiểu cho đúng dịch vụ cần truy cập,
+- thu hồi quyền ngay khi posture thay đổi.
 
-Hệ thống C-ZTNA được lắp ghép từ 5 thành phần mã nguồn mở độc lập, giao tiếp với nhau qua API để tạo thành một vòng lặp bảo mật khép kín (SOAR). Thay vì phụ thuộc vào một giải pháp đắt tiền duy nhất, kiến trúc này phân tách rõ ràng các vai trò:
+## Kiến trúc tổng thể
 
-1. **Keycloak (Identity Provider):** Chịu trách nhiệm quản lý định danh, xác thực người dùng (SSO) và cấp phát mã thông báo JWT.
-2. **FleetDM & Osquery (Posture Agent):** Hệ thống thu thập tình trạng bảo mật của thiết bị điểm cuối, giám sát các tiến trình và cấu hình hệ điều hành theo thời gian thực.
-3. **Open Policy Agent - OPA (Policy Decision Point):** Bộ não trung tâm đánh giá các chính sách truy cập dựa trên ngôn ngữ Rego, phân xử việc cấp phép hoặc cách ly.
-4. **OpenZiti (Policy Enforcement Point):** Nền tảng mạng Overlay tạo các đường hầm vi phân đoạn (mTLS) và thực thi lệnh ngắt/mở kết nối ở tầng TCP/IP.
-5. **Posture Orchestrator (Middleware):** Script Python đóng vai trò "dải băng keo", đồng bộ hóa quyết định từ OPA sang OpenZiti.
+Hệ thống gồm 5 khối chính:
 
-## Lộ trình Triển khai (Phase 1 - Phase 9)
+1. **Keycloak**: quản lý danh tính, SSO, OIDC và phát hành JWT.
+2. **OpenZiti**: tạo overlay network, cấp identity và thực thi policy ở tầng kết nối.
+3. **FleetDM + Osquery**: thu thập posture của endpoint theo chu kỳ.
+4. **OPA**: ra quyết định dựa trên policy Rego.
+5. **Posture Orchestrator**: đồng bộ dữ liệu giữa FleetDM, OPA và OpenZiti để tự động cách ly hoặc khôi phục thiết bị.
 
-Hệ thống được triển khai tuần tự qua 9 giai đoạn (Phases) để đảm bảo tính logic và dễ dàng khắc phục sự cố:
+## Luồng xử lý chính
 
-* **[Phase 1: Triển khai Identity Provider (Keycloak)](phase1.md)** - Xây dựng hệ thống định danh.
-* **[Phase 2: Thiết lập mạng lõi (OpenZiti)](phase2.md)** - Xây dựng nền tảng mạng Overlay.
-* **[Phase 3: Giám sát Posture (FleetDM & Osquery)](phase3.md)** - Cài đặt tác nhân giám sát thiết bị.
-* **[Phase 4: Bộ não ra quyết định (OPA)](phase4.md)** - Viết luật đánh giá bảo mật.
-* **[Phase 5: Tích hợp Xác thực (Keycloak + Ziti)](phase5.md)** - Ủy quyền đăng nhập bằng JWT.
-* **[Phase 6: Posture Orchestrator](phase6.md)** - Lập trình luồng tự động hóa.
-* **[Phase 7: Dịch vụ và Chính sách Mạng (Zero Trust Rules)](phase7.md)** - Định nghĩa Dark Services.
-* **[Phase 8: Kịch bản Thực nghiệm (Demo)](phase8.md)** - Chạy thử nghiệm các luồng tấn công.
-* **[Phase 9: Xử lý sự cố & Checklist](phase9.md)** - Các lỗi thường gặp và cách khắc phục.
+1. User đăng nhập qua Keycloak để lấy JWT.
+2. OpenZiti dùng JWT đó để xác thực và cấp phiên truy cập.
+3. FleetDM liên tục kiểm tra posture của endpoint.
+4. Orchestrator lấy kết quả posture, gửi sang OPA để xin quyết định.
+5. Nếu OPA trả về `quarantine`, Orchestrator đổi role/tag trên OpenZiti và thu hồi session đang hoạt động.
+6. Nếu thiết bị sạch trở lại, Orchestrator cấp lại trạng thái `compliant` để cho phép truy cập dịch vụ phù hợp.
+
+## Lộ trình triển khai
+
+Nên đi đúng thứ tự dưới đây để tránh cấu hình chồng chéo và dễ debug:
+
+| Phase | Mục tiêu | Kết quả đầu ra |
+| --- | --- | --- |
+| [Phase 1](phase1.md) | Dựng Keycloak | Có realm, user và OIDC client dùng cho Ziti |
+| [Phase 2](phase2.md) | Dựng OpenZiti | Có controller, edge router và identity mẫu |
+| [Phase 3](phase3.md) | Dựng FleetDM + Osquery | Có host online và policy posture trả kết quả |
+| [Phase 4](phase4.md) | Dựng OPA | Có policy Rego trả về `compliant` hoặc `quarantine` |
+| [Phase 5](phase5.md) | Nối Keycloak với Ziti | User đăng nhập Ziti bằng JWT từ Keycloak |
+| [Phase 6](phase6.md) | Viết Orchestrator | Posture tự đồng bộ sang Ziti |
+| [Phase 7](phase7.md) | Tạo service và access policy | Chỉ đúng role + đúng posture mới truy cập được |
+| [Phase 8](phase8.md) | Chạy demo end-to-end | Kiểm chứng luồng cấp quyền, cách ly và khôi phục |
+| [Phase 9](phase9.md) | Troubleshooting và checklist | Có danh sách kiểm tra trước khi demo hoặc bàn giao |
+
+## Cách đọc bộ tài liệu này
+
+Mỗi phase đều được viết theo cùng một cấu trúc:
+
+- **Mục tiêu**: phase này giải quyết bài toán gì.
+- **Chuẩn bị**: các thành phần cần sẵn sàng trước khi làm.
+- **Các bước triển khai**: thứ tự thao tác nên làm.
+- **Điểm kiểm tra**: dấu hiệu để xác nhận phase đã ổn.
+- **Đầu ra**: những gì cần có để chuyển sang phase tiếp theo.
+
+## Khuyến nghị triển khai lab
+
+- Dùng DNS nội bộ hoặc file `hosts` để đặt tên nhất quán cho `keycloak`, `fleet`, `opa` và các dịch vụ demo.
+- Giữ chung một convention tên identity, ví dụ `ep-<hostname>`, ngay từ đầu.
+- Tách rõ role nghiệp vụ và role posture, ví dụ `#role.sales` khác `#posture.compliant`.
+- Chỉ demo automation sau khi đã xác minh từng thành phần chạy độc lập.
+
+Nếu bạn đi tuần tự từ Phase 1 đến Phase 9, gần như toàn bộ lỗi khó sẽ được chặn từ sớm thay vì dồn về cuối lúc tích hợp.

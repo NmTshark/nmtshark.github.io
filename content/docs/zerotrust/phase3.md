@@ -6,49 +6,99 @@ authors: []
 tags: ["FleetDM", "Osquery", "Device Posture", "EDR"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
-date: '2023-11-03'
-lastmod: '2023-11-03'
+date: '2026-01-26'
+lastmod: '2026-04-30'
 draft: false
 weight: 3
 ---
 
-Thành phần thứ ba của hệ thống có nhiệm vụ trả lời câu hỏi: "Thiết bị có an toàn không?". Chúng ta sử dụng FleetDM làm máy chủ quản lý tập trung và Osquery làm tác nhân giám sát.
+Zero Trust không chỉ hỏi "bạn là ai" mà còn hỏi thêm "thiết bị bạn đang dùng có an toàn không". Phase này xây dựng lớp quan sát posture để hệ thống có dữ liệu ra quyết định thay vì chỉ dựa vào danh tính.
 
-## 1. Khởi chạy FleetDM Server
+## Mục tiêu
 
-FleetDM được đóng gói qua Docker Compose, yêu cầu 3 container hoạt động song song:
-1. **FleetDM App:** Giao diện quản trị và xử lý API.
-2. **MySQL:** Lưu trữ thông tin thiết bị và cấu hình truy vấn.
-3. **Redis:** Cache dữ liệu tăng tốc phản hồi.
+- dựng được FleetDM server,
+- enroll được Osquery agent từ endpoint,
+- nhìn thấy host online trong dashboard,
+- tạo được ít nhất một policy posture có thể pass hoặc fail rõ ràng.
 
-Khởi chạy bằng lệnh:
+## Chuẩn bị
+
+- máy chủ chạy FleetDM,
+- Docker Compose hoặc bộ cài tương đương,
+- endpoint Windows hoặc Linux để cài agent,
+- kết nối mạng ổn định giữa endpoint và FleetDM,
+- chứng chỉ TLS hợp lệ nếu bạn truy cập bằng domain.
+
+## Bước 1: Khởi chạy FleetDM
+
+Thông thường FleetDM sẽ chạy cùng các thành phần phụ trợ như:
+
+- ứng dụng FleetDM,
+- MySQL,
+- Redis.
+
+Khởi chạy stack:
+
 ```bash
 docker compose up -d
 ```
-Sau khi khởi chạy, truy cập `http://localhost:8443` để tạo tài
-Truy cập giao diện web FleetDM (thường ở port 8443), khởi tạo tài khoản Admin và lấy chuỗi Enroll Secret.
 
-2. Cài đặt Osquery Agent lên Client
-Trên các máy ảo Windows/Linux đóng vai trò là Client:
+Sau khi dịch vụ lên, truy cập giao diện FleetDM và hoàn tất:
 
-Tải bộ cài đặt từ trang chủ Osquery.
+- tạo tài khoản admin,
+- cấu hình tổ chức hoặc team nếu cần,
+- lấy `enroll secret` cho agent.
 
-Khởi chạy daemon osqueryd kèm theo cờ cấu hình:
+## Bước 2: Cài Osquery agent lên endpoint
 
---tls_hostname: Trỏ về địa chỉ URL của FleetDM Server.
+Trên máy client, cài `osqueryd` rồi trỏ agent về FleetDM bằng:
 
---enroll_secret_path: Trỏ đến file chứa Enroll Secret.
+- `--tls_hostname`
+- `--enroll_secret_path`
+- các tham số log và schedule theo chuẩn môi trường của bạn
 
-Quay lại Dashboard của FleetDM, thiết bị sẽ hiển thị trong danh sách Hosts với trạng thái Online.
+Điểm quan trọng là endpoint phải enroll thành công và xuất hiện trong danh sách `Hosts`. Nếu không thấy host online, chưa nên viết policy vội.
 
-3. Thiết lập Policies (Luật kiểm tra)
-FleetDM dùng cú pháp SQL để truy vấn thông tin hệ điều hành. Chuyển đến tab Policies trên FleetDM và thêm luật quét mã độc.
+## Bước 3: Tạo policy posture đầu tiên
 
-Ví dụ: Kiểm tra tiến trình đào coin XMRig:
+Bắt đầu bằng một policy rất rõ ràng, dễ tái hiện kết quả, ví dụ phát hiện tiến trình bị cấm:
 
-SQL
+```sql
 SELECT name, pid FROM processes WHERE name = 'xmrig.exe';
-Thiết lập Polling Interval là 10 giây. Nếu câu lệnh SQL trả về kết quả (có tiến trình đang chạy), FleetDM sẽ đánh dấu thiết bị là Failing (Vi phạm).
+```
 
+Ý tưởng ở đây:
 
-Nếu trong quá trình cài đặt Osquery Agent lên máy ảo mà gặp lỗi kết nối TLS với FleetDM, bạn cứ n
+- nếu query không trả bản ghi nào, host ở trạng thái sạch với policy đó,
+- nếu query trả về kết quả, host bị đánh dấu `failing`.
+
+Bạn có thể đặt polling interval ngắn trong lab, ví dụ 10 giây, để quan sát phản ứng nhanh hơn ở các phase demo.
+
+## Bước 4: Kiểm tra dữ liệu posture trên host
+
+Sau khi policy chạy, cần xác minh được 3 thứ:
+
+- host có xuất hiện trong FleetDM,
+- policy đã được áp vào host,
+- trạng thái `passing` hoặc `failing` thay đổi đúng khi bạn bật hoặc tắt tiến trình kiểm thử.
+
+Nếu policy không đổi trạng thái dù bạn đã mô phỏng hành vi vi phạm, hãy xử lý xong ở phase này. Đừng đẩy lỗi sang OPA hay Orchestrator.
+
+## Điểm kiểm tra
+
+Phase 3 được xem là hoàn tất khi:
+
+- FleetDM dashboard truy cập ổn,
+- endpoint enroll thành công,
+- ít nhất một host hiện `Online`,
+- ít nhất một policy posture có khả năng sinh kết quả `failing` để dùng cho bước tự động hóa.
+
+## Đầu ra của phase
+
+Sau phase này, bạn cần có:
+
+- FleetDM server đang chạy,
+- endpoint đã enroll,
+- dữ liệu posture đủ tin cậy để chuyển cho OPA ở Phase 4.
+
+Khi posture đã đo được và tái hiện được, bạn mới nên đưa logic ra quyết định vào OPA.

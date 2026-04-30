@@ -1,54 +1,127 @@
 ---
 title: "Phase 8: Kịch bản Thực nghiệm (Demo)"
-description: "Hướng dẫn thực hiện 4 kịch bản kiểm thử để đánh giá độ trễ và khả năng bảo vệ tự động của hệ thống."
+description: "Hướng dẫn thực hiện các kịch bản kiểm thử để đánh giá độ trễ và khả năng bảo vệ tự động của hệ thống."
 toc: true
 authors: []
 tags: ["Testing", "Demo", "Incident Response", "Zero Trust"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
-date: '2023-11-08'
-lastmod: '2023-11-08'
+date: '2026-03-02'
+lastmod: '2026-04-30'
 draft: false
 weight: 8
 ---
 
-Mọi thiết lập về định danh, mạng lưới, giám sát và tự động hóa đã hoàn tất! Để chứng minh hệ thống C-ZTNA hoạt động hoàn hảo trong môi trường thực tế, bạn cần chạy tuần tự 4 kịch bản kiểm thử (Test Cases) sau đây.
+Sau khi hoàn tất phần dựng hạ tầng và policy, bạn cần một phase demo rõ ràng để chứng minh hệ thống không chỉ "đúng cấu hình" mà còn **đúng hành vi**. Phase này nên được chạy tuần tự, có quan sát, có log và có đầu ra đủ thuyết phục.
 
-## Kịch bản A: Truy cập hợp lệ (Happy Path)
+## Mục tiêu
 
-Kịch bản này chứng minh luồng đăng nhập Zero Trust cơ bản thông qua cơ chế SSO của Keycloak.
+- kiểm chứng luồng đăng nhập hợp lệ,
+- chứng minh khả năng phát hiện vi phạm posture,
+- chứng minh khả năng cách ly tự động,
+- chứng minh khả năng khôi phục quyền truy cập sau khi thiết bị sạch trở lại.
 
-* **Thao tác:** 1. Người dùng mở ứng dụng Ziti Desktop Edge (ZDE) trên máy trạm.
-  2. Click vào nút **Authorize**. Trình duyệt sẽ tự động bật lên và chuyển hướng đến trang đăng nhập của Keycloak.
-  3. Đăng nhập bằng tài khoản hợp lệ, ví dụ: `alice.sales@lab.local`.
-* **Kết quả kỳ vọng:** * Identity trên giao diện ZDE chuyển sang trạng thái `Active`. 
-  * Người dùng mở trình duyệt và truy cập thành công vào tên miền ảo `http://sales-web.demo`.
+## Cách chuẩn bị demo
 
-## Kịch bản B: Tấn công mã độc (Vi phạm Posture)
+Trước khi chạy từng kịch bản, nên mở sẵn:
 
-Kịch bản này chứng minh khả năng "Xác minh liên tục" (Continuous Verification) và tốc độ ngắt mạng tự động (Automated SOAR) của hệ thống.
+- Ziti Desktop Edge trên máy client,
+- dashboard FleetDM,
+- log của Orchestrator,
+- giao diện OPA nếu bạn có bật log,
+- ZAC hoặc CLI để theo dõi role/session của identity.
 
-* **Thao tác:** Trong lúc người dùng đang làm việc bình thường trên trang Sales, hãy chạy một phần mềm bị cấm (ví dụ: bật file giả lập mã độc đào coin `XMRig` hoặc tắt Windows Defender) trên máy trạm đó.
-* **Kết quả kỳ vọng:** 1. Khoảng vài giây sau, Terminal của Posture Orchestrator nhảy log thông báo nhận được sự kiện vi phạm từ FleetDM.
-  2. OPA trả về phán quyết `quarantine`. Orchestrator lập tức gọi Ziti API để đổi nhãn thiết bị và thu hồi Session.
-  3. Đường hầm mạng đến `sales-web.demo` **bị cắt đứt ngay lập tức** (Website quay vòng vòng rồi báo lỗi *Site can't be reached*). 
-  *Thời gian đo lường từ lúc phát hiện đến khi ngắt mạng (TTE) chỉ rơi vào khoảng ~35 mili-giây, tổng thời gian tự động phản hồi ~10.12 giây.*
+Làm vậy sẽ giúp demo mạch lạc hơn nhiều vì người xem nhìn thấy nguyên nhân và hệ quả ở từng lớp.
 
-## Kịch bản C: Hạ cánh mềm (Self-Remediation)
+## Kịch bản A: Truy cập hợp lệ
 
-Kịch bản này chứng minh tính nhân văn và tối ưu trải nghiệm người dùng (UX) của kiến trúc. Thay vì cắt Internet hoàn toàn, hệ thống mở đường cho nhân viên tự cứu lấy mình.
+Mục tiêu của kịch bản này là chứng minh user đúng và máy sạch thì được cấp quyền.
 
-* **Thao tác:** Ngay khi bị mất mạng Sales (ở Kịch bản B), người dùng gõ URL của trang Trạm y tế: `http://remediate.demo` (hoặc `helpdesk.demo` tùy bạn đặt tên).
-* **Kết quả kỳ vọng:** * Trang web Helpdesk vẫn hiển thị bình thường dù máy đang bị cách ly. 
-  * Nội dung trang web hiển thị thông báo lỗi (ví dụ: *Hệ thống phát hiện phần mềm đào coin*). 
-  * Người dùng làm theo hướng dẫn, tự tay tắt tiến trình `XMRig` đi. 
-  * Đợi khoảng 10 giây để FleetDM quét lại và báo máy "sạch". Orchestrator tự động cấp lại thẻ `compliant`. Mạng Sales tự động thông luồng trở lại mà không cần gọi IT!
+Thao tác:
 
-## Kịch bản D: Hết hạn phiên (Session Timeout)
+1. Import identity vào Ziti Desktop Edge.
+2. Nhấn `Authorize`.
+3. Đăng nhập Keycloak bằng tài khoản hợp lệ, ví dụ `alice.sales@lab.local`.
+4. Truy cập `http://sales-web.demo`.
 
-Kịch bản này chứng minh hệ thống không cấp quyền truy cập vĩnh viễn, ngăn chặn rủi ro Session Hijacking.
+Kết quả mong đợi:
 
-* **Thao tác:** Đợi cho đến khi JWT Token hết hạn (theo thời gian Expiration cấu hình trên Keycloak), hoặc Admin chủ động ép hết hạn (Revoke) phiên đăng nhập từ phía máy chủ Keycloak.
-* **Kết quả kỳ vọng:** Controller của OpenZiti tự động quét và cắt đứt mọi kết nối mạng hiện tại. Ziti Desktop Edge chuyển sang trạng thái xám và yêu cầu người dùng phải click Authorize lại từ đầu để lấy Token mới.
+- identity chuyển sang trạng thái active,
+- service Sales mở bình thường,
+- FleetDM không ghi nhận policy failing,
+- role posture hiện tại là `compliant`.
 
----
+## Kịch bản B: Phát hiện vi phạm và cách ly
+
+Mục tiêu là chứng minh hệ thống xác minh liên tục chứ không chỉ kiểm tra một lần lúc đăng nhập.
+
+Thao tác:
+
+1. Trong lúc đang truy cập `sales-web.demo`, bật tiến trình bị cấm như `xmrig.exe` hoặc mô phỏng một posture fail tương đương.
+2. Chờ FleetDM quét lại.
+
+Kết quả mong đợi:
+
+- FleetDM đánh dấu host `failing`,
+- Orchestrator gửi input sang OPA,
+- OPA trả `quarantine`,
+- Orchestrator đổi role posture và revoke session,
+- truy cập đến `sales-web.demo` bị ngắt.
+
+Nếu bạn có đo thời gian, hãy tách rõ:
+
+- thời gian phát hiện vi phạm,
+- thời gian OPA ra quyết định,
+- thời gian OpenZiti thực thi ngắt kết nối.
+
+## Kịch bản C: Self-remediation
+
+Mục tiêu là chứng minh máy bị cách ly không bị "cắt khỏi thế giới", mà vẫn còn đường để tự sửa lỗi.
+
+Thao tác:
+
+1. Khi máy đang ở trạng thái `quarantine`, truy cập `http://remediate.demo`.
+2. Làm theo hướng dẫn khắc phục trên trang remediation.
+3. Dừng tiến trình vi phạm hoặc khôi phục cấu hình an toàn.
+
+Kết quả mong đợi:
+
+- `remediate.demo` vẫn truy cập được,
+- dịch vụ nghiệp vụ vẫn bị khóa,
+- sau chu kỳ quét tiếp theo, FleetDM trả trạng thái sạch,
+- Orchestrator chuyển posture về `compliant`,
+- quyền truy cập service nghiệp vụ được mở lại.
+
+## Kịch bản D: Hết hạn phiên
+
+Mục tiêu là chứng minh quyền truy cập không tồn tại vĩnh viễn.
+
+Thao tác:
+
+1. Chờ JWT hết hạn hoặc chủ động revoke session từ phía Keycloak hoặc Ziti.
+2. Quan sát trạng thái trên client.
+
+Kết quả mong đợi:
+
+- session hiện tại bị vô hiệu,
+- Ziti Desktop Edge yêu cầu authorize lại,
+- người dùng phải lấy token mới mới tiếp tục truy cập được.
+
+## Điểm kiểm tra
+
+Phase 8 hoàn tất khi cả 4 kịch bản đều có thể tái hiện với kết quả nhất quán:
+
+- user đúng, máy sạch thì vào được,
+- máy vi phạm thì bị cách ly,
+- máy bị cách ly vẫn vào được đường remediation,
+- phiên hết hạn thì phải xác thực lại.
+
+## Đầu ra của phase
+
+Sau phase này, bạn cần có:
+
+- bộ demo end-to-end hoàn chỉnh,
+- log và màn hình minh chứng đủ rõ cho báo cáo hoặc bảo vệ,
+- dữ liệu thực tế để tinh chỉnh polling interval, policy và UX của hệ thống.
+
+Khi demo đã mượt, phase cuối cùng sẽ giúp bạn chốt lại checklist và hướng xử lý sự cố thường gặp.

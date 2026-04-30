@@ -6,43 +6,63 @@ authors: []
 tags: ["Python", "Automation", "SOAR", "API"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
-date: '2023-11-06'
-lastmod: '2023-11-06'
+date: '2026-02-16'
+lastmod: '2026-04-30'
 draft: false
 weight: 6
 ---
 
-Nếu OPA là bộ não ra quyết định, OpenZiti là tay chân thực thi, thì **Posture Orchestrator** chính là hệ thần kinh. Đây là một đoạn mã (middleware) tự viết bằng Python, đóng vai trò kết nối luồng dữ liệu độc lập giữa FleetDM, OPA và OpenZiti thành một vòng lặp tự động hóa (SOAR).
+Nếu OPA là bộ não ra quyết định và OpenZiti là lớp thực thi, thì **Posture Orchestrator** chính là bộ điều phối. Đây là thành phần nối dữ liệu giữa FleetDM, OPA và OpenZiti để biến các policy posture thành hành động thực tế trên mạng.
 
-## 1. Logic hoạt động của Orchestrator
+## Mục tiêu
 
-Đoạn mã Python sẽ chạy ngầm dưới dạng Daemon, thực hiện chu trình 7 bước sau mỗi khoảng thời gian cố định (ví dụ: 5 giây/lần):
+- lấy dữ liệu posture từ FleetDM,
+- gửi input sang OPA để xin quyết định,
+- map host sang identity tương ứng trong OpenZiti,
+- cập nhật role posture và thu hồi session nếu cần,
+- lưu log để phục vụ debug và báo cáo.
 
-1. **Lấy dữ liệu (Polling):** Gọi API của FleetDM để lấy danh sách toàn bộ các Host đang online.
-2. **Trích xuất:** Đọc dữ liệu Host Posture và tính toán danh sách các luật vi phạm (`failing_policies[]`) của từng máy.
-3. **Tham vấn:** Đóng gói mảng vi phạm đó, gửi API sang cho OPA (Port 8181) và nhận về kết quả phán quyết (`compliant` hoặc `quarantine`).
-4. **Ánh xạ danh tính:** Lấy Hostname của thiết bị từ FleetDM, ghép với tiền tố `ep-` để tìm kiếm Định danh (Identity) tương ứng trên OpenZiti Controller (như cấu trúc đặt tên ở Phase 2).
-5. **Cập nhật Nhãn (Tagging):** Gọi Ziti API để cập nhật trường `roleAttributes`. **Lưu ý quan trọng:** Nó phải được lập trình để giữ nguyên các thẻ phòng ban cũ (như `#role.sales`), và chỉ ghi đè thay đổi đối với nhãn posture thành `#posture.compliant` hoặc `#posture.quarantine`.
-6. **Thực thi ngắt mạng (Enforcement):** Nếu quyết định là `quarantine`, Orchestrator không chỉ đổi thẻ mà còn phải gọi API thu hồi lập tức (Revoke Session) các phiên dịch vụ đang active của thiết bị đó. Việc này đảm bảo ngắt mạng tức khắc thay vì chờ hệ thống tự Timeout.
-7. **Lưu vết:** Ghi lại toàn bộ lịch sử biến đổi trạng thái vào cơ sở dữ liệu `orchestrator.db` (SQLite) và xuất ra file CSV để phục vụ báo cáo.
+## Chuẩn bị
 
-## 2. File cấu hình (`config.yaml`)
+- FleetDM đã có host và policy hoạt động,
+- OPA đã trả về quyết định ổn định,
+- OpenZiti đã có identity theo convention `ep-<hostname>`,
+- token hoặc API credential đủ quyền để gọi FleetDM và Ziti API.
 
-Để script Orchestrator linh hoạt mà không cần sửa code, bạn cần định nghĩa một file `config.yaml` chứa thông tin kết nối đến tất cả các thành phần:
+## Luồng xử lý đề xuất
+
+Một vòng lặp của Orchestrator nên làm lần lượt:
+
+1. Gọi FleetDM API để lấy danh sách host online.
+2. Đọc posture hoặc danh sách `failing_policies` của từng host.
+3. Gửi JSON input sang OPA.
+4. Nhận `decision` từ OPA.
+5. Map hostname sang identity trong Ziti theo prefix `ep-`.
+6. Giữ nguyên role nghiệp vụ, chỉ cập nhật role posture.
+7. Nếu quyết định là `quarantine`, thu hồi session đang hoạt động.
+8. Ghi log sự kiện và trạng thái mới.
+
+Điểm mấu chốt là Orchestrator **không được phá hỏng role sẵn có**. Nó chỉ nên thay phần posture như:
+
+- `#posture.compliant`
+- `#posture.quarantine`
+
+## Thiết kế file cấu hình
+
+Nên gom toàn bộ endpoint và tham số vào `config.yaml` thay vì hard-code trong Python:
 
 ```yaml
 poll_interval_seconds: 5
 
 fleet:
-  url: "[https://fleet.lab.local:8443](https://fleet.lab.local:8443)"
-  api_token: "MÃ_TOKEN_LẤY_TỪ_FLEETDM_ADMIN"
+  url: "https://fleet.lab.local:8443"
+  api_token: "TOKEN_FROM_FLEET"
 
 opa:
   url: "http://opa:8181"
   decision_path: "/v1/data/posture/decision"
 
 mapping:
-  mode: "hostname"
   ziti_identity_prefix: "ep-"
 
 posture_attributes:
@@ -50,72 +70,40 @@ posture_attributes:
   quarantine: "posture.quarantine"
 
 enforcement:
-  # Cờ này cực kỳ quan trọng để đảm bảo TTE (Time-to-Enforce) ở mức mili-giây
   revoke_sessions_on_quarantine: true
+```
 
-Gemini đã nói
-Dưới đây là nội dung hoàn chỉnh cho Phase 6. Ở giai đoạn này, chúng ta sẽ thiết lập "trái tim" tự động hóa của toàn bộ hệ thống. Tôi đã gắn tham số weight: 6 vào Frontmatter để đảm bảo đúng thứ tự trên blog của bạn.
+File này đủ để bạn đổi môi trường lab mà gần như không phải đụng đến logic code.
 
-Bạn hãy nhấn nút Copy ở góc trên bên phải khung dưới đây và dán vào file phase6.md:
+## Những điểm nên làm rõ trong code
 
-Markdown
----
-title: "Phase 6: Posture Orchestrator"
-description: "Lập trình kịch bản Python đóng vai trò tự động hóa luồng SOAR cho hệ thống C-ZTNA."
-toc: true
-authors: []
-tags: ["Python", "Automation", "SOAR", "API"]
-categories: ["Tutorials", "Cybersecurity"]
-series: ["Triển khai C-ZTNA"]
-date: '2023-11-06'
-lastmod: '2023-11-06'
-draft: false
-weight: 6
----
+Khi viết Orchestrator, nên tách thành các hàm nhỏ:
 
-Nếu OPA là bộ não ra quyết định, OpenZiti là tay chân thực thi, thì **Posture Orchestrator** chính là hệ thần kinh. Đây là một đoạn mã (middleware) tự viết bằng Python, đóng vai trò kết nối luồng dữ liệu độc lập giữa FleetDM, OPA và OpenZiti thành một vòng lặp tự động hóa (SOAR).
+- lấy host từ FleetDM,
+- trích xuất policy failing,
+- gọi OPA,
+- tìm identity trong Ziti,
+- cập nhật role attributes,
+- revoke session,
+- ghi log SQLite hoặc CSV.
 
-## 1. Logic hoạt động của Orchestrator
+Việc tách hàm sẽ giúp debug dễ hơn nhiều khi một bước nào đó trả lỗi `401`, `404` hoặc timeout.
 
-Đoạn mã Python sẽ chạy ngầm dưới dạng Daemon, thực hiện chu trình 7 bước sau mỗi khoảng thời gian cố định (ví dụ: 5 giây/lần):
+## Điểm kiểm tra
 
-1. **Lấy dữ liệu (Polling):** Gọi API của FleetDM để lấy danh sách toàn bộ các Host đang online.
-2. **Trích xuất:** Đọc dữ liệu Host Posture và tính toán danh sách các luật vi phạm (`failing_policies[]`) của từng máy.
-3. **Tham vấn:** Đóng gói mảng vi phạm đó, gửi API sang cho OPA (Port 8181) và nhận về kết quả phán quyết (`compliant` hoặc `quarantine`).
-4. **Ánh xạ danh tính:** Lấy Hostname của thiết bị từ FleetDM, ghép với tiền tố `ep-` để tìm kiếm Định danh (Identity) tương ứng trên OpenZiti Controller (như cấu trúc đặt tên ở Phase 2).
-5. **Cập nhật Nhãn (Tagging):** Gọi Ziti API để cập nhật trường `roleAttributes`. **Lưu ý quan trọng:** Nó phải được lập trình để giữ nguyên các thẻ phòng ban cũ (như `#role.sales`), và chỉ ghi đè thay đổi đối với nhãn posture thành `#posture.compliant` hoặc `#posture.quarantine`.
-6. **Thực thi ngắt mạng (Enforcement):** Nếu quyết định là `quarantine`, Orchestrator không chỉ đổi thẻ mà còn phải gọi API thu hồi lập tức (Revoke Session) các phiên dịch vụ đang active của thiết bị đó. Việc này đảm bảo ngắt mạng tức khắc thay vì chờ hệ thống tự Timeout.
-7. **Lưu vết:** Ghi lại toàn bộ lịch sử biến đổi trạng thái vào cơ sở dữ liệu `orchestrator.db` (SQLite) và xuất ra file CSV để phục vụ báo cáo.
+Phase 6 hoàn tất khi:
 
-## 2. File cấu hình (`config.yaml`)
+- Orchestrator chạy lặp ổn định,
+- host vi phạm bị đổi từ `posture.compliant` sang `posture.quarantine`,
+- session đang hoạt động bị thu hồi khi cần,
+- log thể hiện rõ ai bị đổi trạng thái, lúc nào và vì lý do gì.
 
-Để script Orchestrator linh hoạt mà không cần sửa code, bạn cần định nghĩa một file `config.yaml` chứa thông tin kết nối đến tất cả các thành phần:
+## Đầu ra của phase
 
-```yaml
-poll_interval_seconds: 5
+Sau phase này, bạn cần có:
 
-fleet:
-  url: "[https://fleet.lab.local:8443](https://fleet.lab.local:8443)"
-  api_token: "MÃ_TOKEN_LẤY_TỪ_FLEETDM_ADMIN"
+- một vòng lặp tự động hóa hoàn chỉnh,
+- posture được phản ánh sang OpenZiti gần như theo thời gian thực,
+- khả năng cách ly hoặc khôi phục endpoint mà không thao tác tay trên ZAC.
 
-opa:
-  url: "http://opa:8181"
-  decision_path: "/v1/data/posture/decision"
-
-mapping:
-  mode: "hostname"
-  ziti_identity_prefix: "ep-"
-
-posture_attributes:
-  compliant: "posture.compliant"
-  quarantine: "posture.quarantine"
-
-enforcement:
-  # Cờ này cực kỳ quan trọng để đảm bảo TTE (Time-to-Enforce) ở mức mili-giây
-  revoke_sessions_on_quarantine: true 
-3. Khởi chạy hệ thần kinh trung ương
-Mở Terminal tại thư mục chứa source code của Orchestrator, cài đặt các thư viện cần thiết (requests, sqlite3...) và chạy lệnh:
-
-Bash
-python3 orchestrator.py
-Hãy để Terminal này chạy ngầm (hoặc dùng tmux/screen). Khi bạn thấy Terminal in ra các dòng log quét (Polling) liên tục màu xanh, xin chúc mừng, vòng lặp tự động hóa của bạn đã chính thức hòa mạng!
+Từ đây, bạn đã sẵn sàng định nghĩa service và access policy thật sự ở Phase 7.

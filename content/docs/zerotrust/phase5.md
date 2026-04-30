@@ -6,48 +6,96 @@ authors: []
 tags: ["Integration", "JWT Signer", "SSO", "OpenZiti", "Keycloak"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
-date: '2023-11-05'
-lastmod: '2023-11-05'
+date: '2026-02-09'
+lastmod: '2026-04-30'
 draft: false
 weight: 5
 ---
 
-Phase này là điểm giao thoa quan trọng nhất để ghép nối thành công Phase 1 (Định danh) và Phase 2 (Mạng lưới). Mục tiêu là phải làm cho Controller của OpenZiti tin tưởng và chấp nhận chuỗi JWT Token do Keycloak sinh ra thay vì dùng cơ chế mật khẩu nội bộ.
+Đây là phase ghép hai nửa quan trọng nhất của hệ thống: **danh tính từ Keycloak** và **quyền truy cập mạng từ OpenZiti**. Khi phase này hoàn tất, người dùng sẽ không còn đăng nhập bằng tài khoản cục bộ của Ziti mà dùng luôn SSO qua Keycloak.
 
-Hệ thống sử dụng cơ chế `Ext-JWT Signer` (Trình ký JWT bên ngoài) áp dụng trực tiếp lên `Default auth-policy` của OpenZiti.
+## Mục tiêu
 
-## 1. Cấu hình External JWT Signer
+- khai báo Keycloak là nhà phát hành JWT hợp lệ,
+- để OpenZiti tin tưởng token từ Keycloak,
+- map user dựa trên claim `email`,
+- xác minh luồng đăng nhập từ Ziti Desktop Edge.
 
-Bạn sử dụng Ziti CLI hoặc giao diện ZAC để khai báo Keycloak làm nhà cung cấp JWT hợp lệ. Các thông số bắt buộc phải khớp tuyệt đối 100% với cấu hình của Keycloak:
+## Chuẩn bị
 
-* **Issuer:** URL gốc của realm Keycloak (Ví dụ: `https://keycloak.lab.local/realms/ztna-lab`). *Lưu ý không để dư dấu gạch chéo `/` ở cuối.*
-* **Audience:** Bỏ trống hoặc thiết lập chuẩn theo cấu hình OIDC của Keycloak.
-* **Client ID:** Bắt buộc nhập `openziti-oidc` (Client chúng ta đã tạo ở Phase 1).
-* **Claims Property:** Nhập `email`. Đây là lệnh báo cho Ziti biết: "Hãy đọc trường Email trong token JWT, và đối chiếu xem nó có khớp với External ID của thiết bị đang xin kết nối không".
+- Phase 1 đã có realm, client và user,
+- Phase 2 đã có identity với `external-id`,
+- issuer URL của Keycloak đã ổn định,
+- bạn xác nhận token thật sự có claim `email`.
 
-*Lưu ý: Bạn cũng cần lấy chứng chỉ public key (JWKS Endpoint) của Keycloak để Ziti có thể giải mã token. Sau khi tạo xong, hãy ghi lại **ID của Signer** này.*
+## Bước 1: Tạo External JWT Signer
 
-## 2. Cập nhật Auth-Policy Mặc định
+Trong OpenZiti, bạn cần khai báo một `Ext-JWT Signer` để controller biết:
 
-Theo thiết kế hệ thống tối ưu và ổn định nhất, thay vì tạo một Auth-Policy mới phức tạp, chúng ta sẽ **cập nhật trực tiếp Default auth-policy** để nó cho phép sử dụng Ext-JWT Signer.
+- token đến từ đâu,
+- public key nào dùng để kiểm tra chữ ký,
+- claim nào dùng để map sang identity.
 
-Sử dụng công cụ `ziti-cli` để kích hoạt bằng câu lệnh sau:
+Các thông số cần đặc biệt cẩn thận:
+
+- **Issuer**: URL realm của Keycloak, ví dụ `https://keycloak.lab.local/realms/ztna-lab`
+- **Client ID**: `openziti-oidc`
+- **Claims property**: `email`
+- **JWKS / public key source**: phải lấy đúng từ Keycloak
+
+Một lỗi nhỏ như dư dấu `/` ở cuối `issuer` cũng có thể làm toàn bộ flow thất bại.
+
+## Bước 2: Gắn signer vào auth policy
+
+Sau khi có signer, bạn cần cho auth policy của OpenZiti chấp nhận signer đó. Trong lab đơn giản, cập nhật trực tiếp `default auth-policy` là cách dễ theo dõi nhất:
 
 ```bash
-# Đảm bảo Default policy chấp nhận trình ký bên ngoài
-ziti edge update auth-policy default --primary-ext-jwt-allowed --primary-ext-jwt-allowed-signers <ID_CỦA_SIGNER_VỪA_TẠO>
+ziti edge update auth-policy default --primary-ext-jwt-allowed --primary-ext-jwt-allowed-signers <SIGNER_ID>
 ```
-3. Hiểu rõ luồng đăng nhập thực tế (Login Flow)
-Việc cập nhật Default auth-policy giúp cho luồng trải nghiệm người dùng (UX) trên Ziti Desktop Edge (ZDE) diễn ra cực kỳ mượt mà và bảo mật:
 
-Khởi tạo: Thiết bị được tạo Identity trên ZAC (như đã làm ở Phase 2) và người dùng tải file .jwt (Enrollment token) về máy.
+Mục tiêu của bước này là nói với controller rằng:
 
-Nạp chứng chỉ: Người dùng nạp file .jwt vào phần mềm Ziti Desktop Edge.
+- identity thuộc policy này được phép dùng external JWT,
+- signer nào là signer hợp lệ.
 
-Xác thực SSO: Người dùng nhấn nút "Authorize" trên phần mềm. Lập tức ZDE sẽ mở trình duyệt web lên và trỏ về màn hình đăng nhập của Keycloak.
+## Bước 3: Kiểm tra lại mapping giữa token và identity
 
-Cấp Token: Người dùng nhập User/Pass (hoặc quét MFA/FaceID) thành công. Keycloak ném JWT Token về lại cho ứng dụng ZDE.
+Đây là chỗ dễ lệch nhất trong toàn bộ tài liệu. Cần bảo đảm:
 
-Mở đường hầm: ZDE cầm Token đó trình diện cho Ziti Controller. Controller kiểm tra Token bằng Ext-JWT Signer vừa cấu hình. Nếu hợp lệ, một phiên làm việc (API Session) được tạo ra (hasApiSession=true) và đường hầm mạng được mở!
+- user đăng nhập có `email` trong token,
+- identity trên Ziti có `external-id` đúng bằng email đó,
+- auth policy đang áp đúng lên identity cần thử nghiệm.
 
-Bằng cách này, OpenZiti hoàn toàn không nắm giữ mật khẩu của người dùng, đảm bảo chuẩn Zero Trust tuyệt đối ở khâu quản trị danh tính.
+Nếu một trong ba điểm trên sai, user vẫn đăng nhập Keycloak thành công nhưng identity trong Ziti sẽ không active.
+
+## Bước 4: Test luồng đăng nhập thực tế
+
+Luồng mong đợi nên diễn ra như sau:
+
+1. Người dùng import enrollment token vào Ziti Desktop Edge.
+2. Trên client, người dùng bấm `Authorize`.
+3. Trình duyệt mở ra và chuyển hướng sang Keycloak.
+4. Người dùng đăng nhập bằng tài khoản hợp lệ.
+5. Keycloak trả JWT về cho Ziti Desktop Edge.
+6. Ziti Controller xác minh token và tạo API session.
+
+Khi thành công, identity sẽ chuyển sang trạng thái active và có thể dùng để truy cập service khi policy cho phép.
+
+## Điểm kiểm tra
+
+Phase 5 hoàn tất khi:
+
+- `Ext-JWT Signer` được tạo thành công,
+- auth policy đã cho phép external JWT,
+- identity có `hasApiSession = true` sau khi người dùng authorize,
+- không còn phụ thuộc vào cơ chế password nội bộ của Ziti.
+
+## Đầu ra của phase
+
+Sau phase này, bạn cần có:
+
+- SSO giữa Keycloak và OpenZiti,
+- mapping danh tính hoạt động ổn định bằng `email`,
+- người dùng có thể đăng nhập Ziti bằng JWT.
+
+Khi lớp xác thực đã xong, bạn có thể bắt đầu tự động hóa quyết định posture ở Phase 6.

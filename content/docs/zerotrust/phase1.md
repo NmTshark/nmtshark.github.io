@@ -7,41 +7,112 @@ tags: ["Keycloak", "IAM", "OIDC", "JWT"]
 categories: ["Tutorials", "Cybersecurity"]
 series: ["Triển khai C-ZTNA"]
 date: '2026-01-12'
-lastmod: '2026-01-19'
+lastmod: '2026-04-30'
 draft: false
 weight: 1
 ---
 
-Trong Phase này, chúng ta sẽ thiết lập Keycloak để trả lời câu hỏi đầu tiên của Zero Trust: "Bạn là ai?". Keycloak sẽ đóng vai trò là "cửa khẩu" duy nhất để cấp phép danh tính cho toàn bộ hệ thống.
+Phase này trả lời câu hỏi đầu tiên của Zero Trust: **người dùng là ai**. Mục tiêu là dựng một Identity Provider tập trung để các phase sau không phải tự quản lý user, password hay session riêng lẻ.
 
-## Khởi chạy Keycloak với Docker
+## Mục tiêu
 
-Để đảm bảo tính cô lập và dễ dàng quản lý, Keycloak sẽ được chạy dưới dạng container cùng với cơ sở dữ liệu PostgreSQL.
+- dựng Keycloak chạy ổn định,
+- tạo một realm riêng cho lab,
+- tạo OIDC client để OpenZiti dùng về sau,
+- chuẩn hóa user và claim `email` để map với identity phía Ziti.
 
-Bạn cần tạo một file `docker-compose.yml` định nghĩa service Keycloak, phơi port `8080` (hoặc `8443` nếu dùng HTTPS) và thiết lập các biến môi trường cấu hình tài khoản Admin mặc định. Sau khi cấu hình xong, chạy lệnh `docker compose up -d` để khởi động dịch vụ. Đảm bảo container trạng thái `Healthy` trước khi tiếp tục.
+## Chuẩn bị
 
-## Cấu hình Realm và OIDC Client
+- 1 máy chủ hoặc VM chạy Docker và Docker Compose,
+- cổng `8080` hoặc `8443` mở sẵn,
+- PostgreSQL đi kèm nếu bạn muốn tách dữ liệu bền vững thay vì chạy chế độ dev,
+- danh sách user demo dùng cho các phòng ban khác nhau.
 
-Sau khi đăng nhập vào Keycloak Admin Console, chúng ta không sử dụng Realm `master` mà phải tạo một không gian làm việc riêng biệt.
+## Bước 1: Khởi chạy Keycloak
 
-1. **Tạo Realm:** Khởi tạo một Realm mới với tên `ztna-lab`. Đây sẽ là ranh giới logic cho toàn bộ user và ứng dụng của dự án.
-2. **Tạo Client:** OpenZiti Desktop Edge sẽ giao tiếp với Keycloak thông qua giao thức OpenID Connect (OIDC). Bạn cần tạo một Client mới với cấu hình:
-   * **Client ID:** `openziti-oidc` (Ghi nhớ ID này để cấu hình Ziti ở Phase 5).
-   * **Client Authentication:** Chuyển sang `Off` (Thiết lập thành Public client vì Ziti Desktop Edge là ứng dụng cài trên máy khách, không thể lưu trữ Client Secret an toàn).
-   * **Valid Redirect URIs:** Đặt là `*` trong môi trường lab (hoặc cấu hình URI callback cụ thể của Ziti Desktop Edge nếu triển khai thực tế).
+Khuyến nghị chạy Keycloak bằng Docker Compose để dễ backup và nâng cấp. Tối thiểu bạn cần:
 
-## Tạo Người dùng và Claims Mapping
+- 1 container Keycloak,
+- 1 container PostgreSQL,
+- biến môi trường admin cho lần đăng nhập đầu tiên.
 
-Hệ thống OpenZiti trong kiến trúc này yêu cầu ánh xạ (mapping) người dùng thông qua trường `email`. Do đó, cấu hình JWT Token phải được tinh chỉnh.
+Sau khi chuẩn bị xong `docker-compose.yml`, khởi chạy dịch vụ:
 
-### 1. Khởi tạo User Demo
-Truy cập mục Users và tạo các tài khoản đại diện cho các phòng ban khác nhau:
-* `alice.hr@lab.local` (Phòng Nhân sự)
-* `alice.sales@lab.local` (Phòng Kinh doanh)
-* `tinh.sales@lab.local` (Phòng Kinh doanh)
+```bash
+docker compose up -d
+```
 
-Lưu ý: Bắt buộc phải điền đầy đủ trường Email và thiết lập mật khẩu (tắt trạng thái Temporary) cho các user này.
+Chỉ chuyển sang bước tiếp theo khi:
 
-### 2. Cấu hình Claims Mapping
-Mặc định, JWT Token của Keycloak có thể không chứa đầy đủ các Claim (thuộc tính) mà OpenZiti cần. 
-Trong phần **Client Scopes** của client `openziti-oidc`, bạn cần kiểm tra và thêm bộ ánh xạ (Mapper). Đảm bảo mapper `email` được đưa vào JWT Token một cách rõ ràng. Token này khi sinh ra sẽ chứa thông tin user id, phân quyền và thời gian sống (expiration time) để Ziti Controller có thể kiểm chứng sau này.
+- container Keycloak đã `Up` và ổn định,
+- bạn truy cập được giao diện admin,
+- đăng nhập được bằng tài khoản quản trị ban đầu.
+
+## Bước 2: Tạo realm riêng cho dự án
+
+Không nên dùng trực tiếp realm `master`. Hãy tạo một realm riêng, ví dụ `ztna-lab`, để:
+
+- tách biệt cấu hình lab khỏi quản trị hệ thống,
+- dễ export, backup và reset,
+- tránh nhầm lẫn khi số lượng client và mapper tăng lên.
+
+Realm này sẽ là namespace logic chung cho user, role và OIDC client của toàn bộ hệ thống C-ZTNA.
+
+## Bước 3: Tạo OIDC client cho OpenZiti
+
+Tạo một client mới với vai trò là đầu cuối đăng nhập cho Ziti Desktop Edge hoặc các identity người dùng.
+
+Thông số nên thống nhất sớm:
+
+- **Client ID**: `openziti-oidc`
+- **Client type**: public client
+- **Client authentication**: `Off`
+- **Redirect URI**: dùng URI callback đúng với Ziti Desktop Edge, hoặc tạm dùng `*` trong lab nếu bạn đang thử nhanh
+
+Việc đặt `public client` là hợp lý vì desktop app không phải nơi an toàn để lưu `client secret`.
+
+## Bước 4: Tạo user mẫu
+
+Nên tạo ít nhất 2 đến 3 user để test khác phòng ban, ví dụ:
+
+- `alice.hr@lab.local`
+- `alice.sales@lab.local`
+- `tinh.sales@lab.local`
+
+Khi tạo user, cần lưu ý:
+
+- điền đầy đủ trường `email`,
+- đặt password không ở trạng thái temporary nếu muốn demo nhanh,
+- có thể gán thêm group hoặc role nội bộ của Keycloak nếu bạn muốn mở rộng về sau.
+
+## Bước 5: Kiểm tra claim trong token
+
+Điểm quan trọng nhất của phase này là **token phải chứa claim mà OpenZiti sẽ dùng để đối chiếu**. Trong kiến trúc này, claim đó là `email`.
+
+Hãy kiểm tra trong `Client Scopes` hoặc mapper của client để bảo đảm:
+
+- token có trường `email`,
+- giá trị `email` đúng với user đăng nhập,
+- các claim mặc định như `iss`, `aud`, `exp` cũng xuất hiện đúng chuẩn OIDC.
+
+Nếu bỏ sót bước này, đến Phase 5 bạn sẽ đăng nhập Keycloak thành công nhưng Ziti vẫn từ chối tạo phiên.
+
+## Điểm kiểm tra
+
+Phase 1 được xem là hoàn tất khi:
+
+- vào được realm `ztna-lab`,
+- client `openziti-oidc` đã tồn tại,
+- user demo đăng nhập được,
+- token trả về có claim `email` đúng như mong đợi.
+
+## Đầu ra của phase
+
+Sau phase này, bạn cần có:
+
+- realm `ztna-lab`,
+- client `openziti-oidc`,
+- bộ user demo,
+- token OIDC có claim `email` dùng được cho bước tích hợp với OpenZiti.
+
+Khi đã có đủ 4 đầu ra trên, bạn có thể chuyển sang dựng mặt phẳng mạng ở Phase 2.

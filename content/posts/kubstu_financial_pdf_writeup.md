@@ -272,19 +272,5 @@ Bài này là một bài **PDF forensic + decoy analysis**.
 ```text
 KubSTU{PDF_M3t4d4t4_F0r3ns1cs_4dv4nc3d_Ch4ll3ng3_2025_S3cur3_Emb3dd3d_F1l3_3ncrypt10n_Pr0t0c0l}
 ```
----
-author: NmToan
-date: 2026-05-02T00:00:00.000Z
-lastmod: 2026-05-02T00:00:00.000Z
-title: KubSTU Financial PDF Write-up
-slug: kubstu-financial-pdf-write-up
-featured: false
-draft: false
-tags:
-  - Forensics
-  - KubSTU
-  - PDF
-description: Write-up for the KubSTU `financial.pdf` challenge, focusing on embedded files, metadata, and decoy artifacts.
----
 
 

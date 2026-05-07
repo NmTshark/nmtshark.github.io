@@ -1,7 +1,7 @@
 ---
 author: NmToan
-date: 2025-12-27T04:59:04.866Z
-lastmod: 2026-04-27T00:00:00.000Z
+date: 2026-05-02T00:00:00.000Z
+lastmod: 2026-05-02T00:00:00.000Z
 title: VCSPassport BlueTeam CTF Gimme_your_point!
 slug: VCSPassport-Blue-Team-CTF-Gimme-your-point
 featured: false

@@ -445,20 +445,7 @@ Nếu đã hiểu bài rồi, “xương sống” của lời giải chỉ là:
 - XOR body để ra ZIP
 - dùng secret giải AES ZIP
 - grep flag trong `mission_report.txt`
----
-author: NmToan
-date: 2026-05-02T00:00:00.000Z
-lastmod: 2026-05-02T00:00:00.000Z
-title: KubCTF Challenge PCAP Write-up
-slug: kubctf-challenge-pcap-write-up
-featured: false
-draft: false
-tags:
-  - Forensics
-  - KubSTU
-  - Pcap
-description: Write-up for the `challenge.pcap` task, covering stream analysis, decoy protocols, and payload recovery.
----
+
 
 
 
